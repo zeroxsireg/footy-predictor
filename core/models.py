@@ -67,6 +67,11 @@ class TeamStats:
         return self.goals_against / self.matches_played if self.matches_played > 0 else 0.0
     
     @property
+    def goal_difference_per_game(self) -> float:
+        """Goal difference per game."""
+        return (self.goals_for - self.goals_against) / self.matches_played if self.matches_played > 0 else 0.0
+    
+    @property
     def shots_per_game(self) -> float:
         """Shots per game."""
         return self.shots_total / self.matches_played if self.matches_played > 0 else 0.0
@@ -150,8 +155,11 @@ class TeamStats:
 class MatchPrediction:
     """Match prediction data."""
     fixture: Fixture
-    home_stats: TeamStats
-    away_stats: TeamStats
+    home_stats: Optional[TeamStats]
+    away_stats: Optional[TeamStats]
     expected_total_goals: float
     expected_total_corners: float
     expected_total_yellow_cards: float
+    status: str = "ANALYZABLE"  # "ANALYZABLE" or "TO AVOID"
+    warning: Optional[str] = None
+    untracked_teams: Optional[list] = None

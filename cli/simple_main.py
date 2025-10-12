@@ -101,10 +101,10 @@ async def analyze_matchday(league: Optional[str], country: Optional[str], season
             league_id = await analyzer.api_client.get_league_id(country_name, league_name, season_year)
         
         # Analyze next matchday
-        predictions = await analyzer.analyze_next_matchday(league_id, season_year)
+        predictions, round_number = await analyzer.analyze_next_matchday(league_id, season_year)
         
         # Display results
-        await display_matchday(predictions, league_id, season_year)
+        await display_matchday(predictions, league_id, season_year, round_number)
         
     except FootballAPIError as e:
         print(f"❌ API Error: {e}")
@@ -112,112 +112,242 @@ async def analyze_matchday(league: Optional[str], country: Optional[str], season
         print(f"❌ Unexpected error: {e}")
 
 
-async def display_matchday(predictions, league_id=None, season=None):
+async def display_matchday(predictions, league_id=None, season=None, round_number=None):
     """Display matchday predictions."""
     if not predictions:
         print("⚠️ Nessuna partita trovata.")
         return
     
-    print("\n⚽ PARTITE DISPONIBILI - ANALISI")
-    print("=" * 50)
+    # Import player card analyzer
+    from analyzers.player_cards_analyzer import PlayerCardsAnalyzer
+    from adapters.football_api import FootballAPIClient
+    
+    player_card_analyzer = PlayerCardsAnalyzer()
+    api_client = FootballAPIClient()
+    
+    round_text = f" - Giornata {round_number}" if round_number else ""
+    print(f"\n🏆 ANALISI PARTITE{round_text}")
+    print("═" * 60)
     
     for i, prediction in enumerate(predictions, 1):
         fixture = prediction.fixture
+        
+        # Match header with better formatting
+        print(f"\n┌─ MATCH {i} " + "─" * 45)
+        print(f"│ 🏠 {fixture.home_team.name:<25} vs ✈️  {fixture.away_team.name}")
+        
+        day_name = fixture.date.strftime("%A")
+        day_name_it = {
+            "Monday": "Lunedì",
+            "Tuesday": "Martedì", 
+            "Wednesday": "Mercoledì",
+            "Thursday": "Giovedì",
+            "Friday": "Venerdì",
+            "Saturday": "Sabato",
+            "Sunday": "Domenica"
+        }.get(day_name, day_name)
+        print(f"│ 📅 {fixture.date.strftime('%d/%m/%Y')} • {day_name_it} • {fixture.date.strftime('%H:%M')}")
+        if fixture.venue:
+            print(f"│ 🏟️  {fixture.venue}")
+        print("└" + "─" * 52)
+        
+        # Check if match should be avoided
+        if prediction.status == "TO AVOID":
+            print("\n┌─ ⚠️  MATCH TO AVOID " + "─" * 28)
+            print(f"│ 🚫 {prediction.warning}")
+            print(f"│ 📊 Squadre non tracciabili: {', '.join(prediction.untracked_teams)}")
+            print("│ ❌ Match escluso dall'analisi per dati insufficienti")
+            print("│ 💡 Raccomandazione: Evitare per scommesse/analisi")
+            print("└" + "─" * 52)
+            continue
+        
         home_stats = prediction.home_stats
         away_stats = prediction.away_stats
         
-        print(f"\n🏆 Match {i}: {fixture.home_team.name} vs {fixture.away_team.name}")
-        print(f"📅 {fixture.date.strftime('%d/%m/%Y %H:%M')}")
-        if fixture.venue:
-            print(f"🏟️ {fixture.venue}")
+        print("\n┌─ 📊 STATISTICHE SQUADRE " + "─" * 25)
+        print("│")
         
-        print("\n📊 TEAM STATISTICS COMPARISON")
-        print("-" * 40)
-        
-        # Format statistics in a table-like format
-        stats_data = [
-            ("Statistic", "🏠 " + home_stats.team.name, "✈️ " + away_stats.team.name),
-            ("Matches Played", str(home_stats.matches_played), str(away_stats.matches_played)),
-            ("Goals For/Against", f"{home_stats.goals_for}/{home_stats.goals_against}", 
+        # Organize statistics by categories with better icons
+        basic_stats = [
+            ("⚽ Partite Giocate", str(home_stats.matches_played), str(away_stats.matches_played)),
+            ("🎯 Gol Fatti/Subiti", f"{home_stats.goals_for}/{home_stats.goals_against}", 
              f"{away_stats.goals_for}/{away_stats.goals_against}"),
-            ("Goals per Game", f"{home_stats.goals_per_game:.2f}", f"{away_stats.goals_per_game:.2f}"),
-            ("Goals Conceded/Game", f"{home_stats.goals_conceded_per_game:.2f}", 
+            ("📈 Gol per Partita", f"{home_stats.goals_per_game:.2f}", f"{away_stats.goals_per_game:.2f}"),
+            ("📉 Gol Subiti/Partita", f"{home_stats.goals_conceded_per_game:.2f}", 
              f"{away_stats.goals_conceded_per_game:.2f}"),
-            ("Recent Form", home_stats.form[-10:] if home_stats.form else "N/A", 
-             away_stats.form[-10:] if away_stats.form else "N/A"),
-            ("Form Points (L5)", str(home_stats.recent_form_points), str(away_stats.recent_form_points)),
-            ("Clean Sheets", f"{home_stats.clean_sheets} ({home_stats.clean_sheet_percentage:.1f}%)", 
-             f"{away_stats.clean_sheets} ({away_stats.clean_sheet_percentage:.1f}%)"),
-            ("Failed to Score", f"{home_stats.failed_to_score} ({home_stats.failed_to_score_percentage:.1f}%)", 
-             f"{away_stats.failed_to_score} ({away_stats.failed_to_score_percentage:.1f}%)"),
-            ("Penalties", f"{home_stats.penalties_scored}/{home_stats.penalties_scored + home_stats.penalties_missed}", 
-             f"{away_stats.penalties_scored}/{away_stats.penalties_scored + away_stats.penalties_missed}"),
-            ("Penalty Success", f"{home_stats.penalty_conversion_rate:.1f}%", 
-             f"{away_stats.penalty_conversion_rate:.1f}%"),
-            ("Total Yellow Cards", str(home_stats.yellow_cards), str(away_stats.yellow_cards)),
-            ("Yellow Cards/Game", f"{home_stats.yellow_cards_per_game:.2f}", 
-             f"{away_stats.yellow_cards_per_game:.2f}"),
-            ("Total Red Cards", str(home_stats.red_cards), str(away_stats.red_cards)),
-            ("Over 1.5 Goals", f"{home_stats.over_1_5_goals_percentage:.1f}%", 
-             f"{away_stats.over_1_5_goals_percentage:.1f}%"),
-            ("Over 2.5 Goals", f"{home_stats.over_2_5_goals_percentage:.1f}%", 
-             f"{away_stats.over_2_5_goals_percentage:.1f}%"),
-            ("Over 3.5 Goals", f"{home_stats.over_3_5_goals_percentage:.1f}%", 
-             f"{away_stats.over_3_5_goals_percentage:.1f}%"),
-            ("Over 1.5 Conceded", f"{home_stats.over_1_5_conceded_percentage:.1f}%", 
-             f"{away_stats.over_1_5_conceded_percentage:.1f}%"),
-                   ("Over 2.5 Conceded", f"{home_stats.over_2_5_conceded_percentage:.1f}%", 
-                    f"{away_stats.over_2_5_conceded_percentage:.1f}%"),
-                   ("Total Shots", str(home_stats.shots_total), str(away_stats.shots_total)),
-                   ("Shots per Game", f"{home_stats.shots_per_game:.2f}", f"{away_stats.shots_per_game:.2f}"),
-                   ("Shots on Target", str(home_stats.shots_on_target), str(away_stats.shots_on_target)),
-                   ("Shots on Target/Game", f"{home_stats.shots_on_target_per_game:.2f}", f"{away_stats.shots_on_target_per_game:.2f}"),
-                   ("Total Corners", str(home_stats.corners), str(away_stats.corners)),
-                   ("Corners per Game", f"{home_stats.corners_per_game:.2f}", f"{away_stats.corners_per_game:.2f}"),
-                   ("W-D-L Record", f"{home_stats.wins}W-{home_stats.draws}D-{home_stats.losses}L",
-                    f"{away_stats.wins}W-{away_stats.draws}D-{away_stats.losses}L")
+            ("🏆 Vittorie-Pareggi-Sconfitte", f"{home_stats.wins}-{home_stats.draws}-{home_stats.losses}",
+             f"{away_stats.wins}-{away_stats.draws}-{away_stats.losses}")
         ]
         
-        # Print table
-        for row in stats_data:
-            print(f"{row[0]:<20} {row[1]:<15} {row[2]:<15}")
+        form_stats = [
+            ("📊 Forma Recente (10)", home_stats.form[-10:] if home_stats.form else "N/A", 
+             away_stats.form[-10:] if away_stats.form else "N/A"),
+            ("⭐ Punti Forma (5)", str(home_stats.recent_form_points), str(away_stats.recent_form_points)),
+            ("🛡️  Porte Inviolate", f"{home_stats.clean_sheets} ({home_stats.clean_sheet_percentage:.1f}%)", 
+             f"{away_stats.clean_sheets} ({away_stats.clean_sheet_percentage:.1f}%)"),
+            ("🚫 Senza Segnare", f"{home_stats.failed_to_score} ({home_stats.failed_to_score_percentage:.1f}%)", 
+             f"{away_stats.failed_to_score} ({away_stats.failed_to_score_percentage:.1f}%)")
+        ]
         
-        print("\n🔮 EXPECTED COMBINED STATS")
-        print("-" * 30)
-        print(f"Total Goals:        {prediction.expected_total_goals}")
+        advanced_stats = [
+            ("🥅 Rigori (Seg/Tot)", f"{home_stats.penalties_scored}/{home_stats.penalties_scored + home_stats.penalties_missed}", 
+             f"{away_stats.penalties_scored}/{away_stats.penalties_scored + away_stats.penalties_missed}"),
+            ("🎯 % Rigori", f"{home_stats.penalty_conversion_rate:.1f}%", 
+             f"{away_stats.penalty_conversion_rate:.1f}%"),
+            ("🟨 Cartellini Gialli", f"{home_stats.yellow_cards} ({home_stats.yellow_cards_per_game:.2f}/p)", 
+             f"{away_stats.yellow_cards} ({away_stats.yellow_cards_per_game:.2f}/p)"),
+            ("🟥 Cartellini Rossi", str(home_stats.red_cards), str(away_stats.red_cards))
+        ]
+        
+        goal_stats = [
+            ("📊 Over 1.5 Gol", f"{home_stats.over_1_5_goals_percentage:.1f}%", 
+             f"{away_stats.over_1_5_goals_percentage:.1f}%"),
+            ("📊 Over 2.5 Gol", f"{home_stats.over_2_5_goals_percentage:.1f}%", 
+             f"{away_stats.over_2_5_goals_percentage:.1f}%"),
+            ("📊 Over 3.5 Gol", f"{home_stats.over_3_5_goals_percentage:.1f}%", 
+             f"{away_stats.over_3_5_goals_percentage:.1f}%")
+        ]
+        
+        shot_corner_stats = [
+            ("🏹 Tiri Totali", f"{home_stats.shots_total} ({home_stats.shots_per_game:.1f}/p)", 
+             f"{away_stats.shots_total} ({away_stats.shots_per_game:.1f}/p)"),
+            ("🎯 Tiri in Porta", f"{home_stats.shots_on_target} ({home_stats.shots_on_target_per_game:.1f}/p)", 
+             f"{away_stats.shots_on_target} ({away_stats.shots_on_target_per_game:.1f}/p)"),
+            ("📐 Corner", f"{home_stats.corners} ({home_stats.corners_per_game:.1f}/p)", 
+             f"{away_stats.corners} ({away_stats.corners_per_game:.1f}/p)")
+        ]
+        
+        # Print organized statistics with better formatting
+        def print_stats_section(title, stats_list):
+            print(f"│ {title}")
+            print("│ " + "─" * 50)
+            for stat, home_val, away_val in stats_list:
+                print(f"│ {stat:<22} {home_val:<12} {away_val:<12}")
+            print("│")
+        
+        print_stats_section("📈 STATISTICHE GENERALI", basic_stats)
+        print_stats_section("🔥 FORMA E RENDIMENTO", form_stats)
+        print_stats_section("⚡ STATISTICHE AVANZATE", advanced_stats)
+        print_stats_section("🎯 STATISTICHE GOL", goal_stats)
+        print_stats_section("🏹 TIRI E CORNER", shot_corner_stats)
+        print("└" + "─" * 52)
+        
+        print("\n┌─ 🔮 PREVISIONI MATCH " + "─" * 27)
+        print(f"│ ⚽ Gol Totali Attesi:      {prediction.expected_total_goals:.1f}")
         if prediction.expected_total_corners > 0:
-            print(f"Total Corners:      {prediction.expected_total_corners}")
-        print(f"Total Yellow Cards: {prediction.expected_total_yellow_cards}")
+            print(f"│ 📐 Corner Totali Attesi:   {prediction.expected_total_corners:.1f}")
+        print(f"│ 🟨 Cartellini Attesi:     {prediction.expected_total_yellow_cards:.1f}")
         
         if prediction.expected_total_corners == 0:
-            print("📝 Note: Corner statistics calcolati dalle ultime partite quando disponibili")
+            print("│ 📝 Corner: Dati limitati, calcolo approssimativo")
+        print("└" + "─" * 52)
         
         # Add betting predictions
         await display_betting_predictions_async(prediction, league_id, season)
         
+        # Display player cards picks (NUOVO MODULO INTEGRATO)
+        await display_player_cards_picks(fixture, prediction, player_card_analyzer, api_client, league_id, season, league_name="Serie A")
+        
         if i < len(predictions):
-            print("\n" + "=" * 50)
+            print("\n" + "═" * 60)
+
+
+async def display_player_cards_picks(fixture, prediction, player_card_analyzer, api_client, league_id, season, league_name="Unknown League"):
+    """Display top 8 player cards picks for the match."""
+    try:
+        # Usa il NUOVO modulo player_cards_analyzer da analyzers/
+        from analyzers.player_cards_analyzer import PlayerCardsAnalyzer
+        
+        new_analyzer = PlayerCardsAnalyzer()
+        
+        # Get standings for this league
+        standings = []  # PlayerCardAnalyzer will handle missing standings
+        
+        # Generate player cards picks con NUOVO analyzer
+        player_cards_picks = await new_analyzer.analyze_match_players(
+            fixture, standings, league_name, api_client
+        )
+        
+        if not player_cards_picks:
+            return
+        
+        # Show TOP 5 picks for pre-match analysis
+        top_picks = player_cards_picks[:5]
+        
+        if not top_picks:
+            return
+        
+        print(f"\n🟨 TOP {len(top_picks)} GIOCATORI A RISCHIO AMMONIZIONE:")
+        print("═" * 60)
+        
+        for i, pick in enumerate(top_picks, 1):
+            confidence_emoji = "🔥" if pick.confidence == "HIGH" else "⚡" if pick.confidence == "MEDIUM" else "💡"
+            
+            # Extract player name from market
+            player_name = pick.market.replace("Player Card - ", "")
+            team_name = pick.player_team if pick.player_team else ""
+            
+            percentage_color = "🔴" if pick.percentage >= 75 else "🟠" if pick.percentage >= 60 else "🟡"
+            
+            print(f" {i}. {confidence_emoji} {player_name}")
+            if team_name:
+                print(f"    🏟️  {team_name}")
+            print(f"    💰 {pick.odds_range} • {percentage_color} {pick.percentage:.1f}%")
+            print(f"    💬 {pick.reasoning}")
+            print()
+        
+        print("─" * 60)
+        
+    except Exception as e:
+        # Silently skip if player cards analysis fails
+        print(f"⚠️  Player cards analysis unavailable: {e}")
+        pass
 
 
 async def display_betting_predictions_async(prediction, league_id=None, season=None):
     """Display betting predictions for a match (async version)."""
-    from core.betting_predictions import BettingPredictor
+    from betting.orchestrator import BettingOrchestrator
+    from core.odds_fetcher import OddsFetcher
     
-    predictor = BettingPredictor()
-    # Use provided parameters or try to get from prediction context
-    if league_id is None:
-        league_id = getattr(prediction, 'league_id', None)
-    if season is None:
-        season = getattr(prediction, 'season', 2025)
+    orchestrator = BettingOrchestrator()
     
-    betting_analysis = await predictor.analyze_match(prediction, league_id, season)
+    # Il nuovo orchestrator usa direttamente home_stats e away_stats dal prediction
+    if not prediction.home_stats or not prediction.away_stats:
+        print("⚠️  Statistiche non disponibili per questa partita")
+        return None
     
-    # Try to enhance with real odds if fixture ID is available
-    if hasattr(prediction.fixture, 'id'):
-        try:
-            betting_analysis = await predictor.enhance_with_real_odds(betting_analysis, prediction.fixture.id)
-        except Exception as e:
-            print(f"⚠️ Could not fetch real odds: {e}")
+    betting_analysis = orchestrator.analyze_match(
+        prediction.home_stats, 
+        prediction.away_stats
+    )
+    
+    # NUOVO: Enrich with real odds using OddsFetcher
+    odds_fetcher = OddsFetcher()
+    
+    # Initialize OddsFetcher (silent mode)
+    await odds_fetcher.initialize()
+    
+    # Get fixture ID for odds fetching
+    fixture_id = prediction.fixture.id if hasattr(prediction, 'fixture') and prediction.fixture else None
+    
+    if fixture_id:
+        
+        # Enrich each recommendation with real odds
+        for rec in betting_analysis.recommendations:
+            try:
+                result = await odds_fetcher.get_odds_for_market(
+                    fixture_id=fixture_id,
+                    market=rec.market,
+                    selection=rec.selection
+                )
+                
+                if result and result.get('odds'):
+                    rec.real_odds = result['odds']
+                    rec.bookmaker = result.get('bookmaker', 'N/A')
+                    
+            except Exception as e:
+                # Silently skip if odds not available
+                pass
     
     # Now display the betting analysis
     display_betting_analysis(betting_analysis)
@@ -230,81 +360,155 @@ def display_betting_analysis(betting_analysis):
     if not betting_analysis.recommendations:
         return
     
-    print("\n🎯 BETTING RECOMMENDATIONS")
-    print("═" * 50)
+    print("\n┌─ 🎯 RACCOMANDAZIONI SCOMMESSE " + "─" * 20)
+    print("│")
     
-    # Group by confidence
-    high_conf = [r for r in betting_analysis.recommendations if r.confidence == "HIGH"]
-    medium_conf = [r for r in betting_analysis.recommendations if r.confidence == "MEDIUM"]
-    low_conf = [r for r in betting_analysis.recommendations if r.confidence == "LOW"]
+    # Group by category first, then by confidence
+    categories = {
+        "Match Goals": [],
+        "Team Goals": [],
+        "Both Teams to Score": [],
+        "Total Shots": [],
+        "Total Shots on Goal": [],
+        "Team Shots": [],
+        "Team Shots on Goal": [],
+        "Total Corners": [],
+        "Team Corners": [],
+        "Total Cards": [],
+        "Team Cards": [],
+        "Match Result": []
+    }
     
-    if high_conf:
-        print("\n🔥 HIGH CONFIDENCE PICKS:")
-        print("━" * 35)
-        for i, rec in enumerate(high_conf, 1):
-            # Market type emoji
-            market_emoji = {
-                "Goals": "⚽",
-                "BTTS": "🎯", 
-                "Corners": "📐",
-                "Cards": "🟨",
-                "Shots": "🏹"
-            }
-            
-            # Find appropriate emoji for market
-            emoji = "📊"
-            for key, value in market_emoji.items():
-                if key.lower() in rec.market.lower():
-                    emoji = value
-                    break
-            
-            print(f"{i}. {emoji} {rec.market}: {rec.selection}")
-            
-            # Show estimated vs real odds with color coding
-            percentage_color = "🔴" if rec.percentage >= 75 else "🟠" if rec.percentage >= 60 else "🟡"
-            odds_display = f"   💰 Est: {rec.odds_range} │ {percentage_color} {rec.percentage:.1f}%"
-            
-            if rec.real_odds:
-                value_emoji = {"EXCELLENT": "💎", "GOOD": "✨", "FAIR": "👍", "POOR": "⚠️"}.get(rec.value_rating, "")
-                odds_display += f"\n   🏦 Real: {rec.real_odds} ({rec.bookmaker}) {value_emoji} {rec.value_rating}"
-            print(odds_display)
-            
-            print(f"   💬 {rec.reasoning}")
-            print()
+    # Categorize recommendations (nuovo sistema modulare)
+    for rec in betting_analysis.recommendations:
+        if "Match Goals" in rec.market:
+            categories["Match Goals"].append(rec)
+        elif "Goals" in rec.market and ("Corners" not in rec.market):
+            # Distingui tra team goals specifici (es "Como Goals") e match goals
+            if any(team in rec.market for team in ["Goals"]) and "Total" not in rec.market and "Match" not in rec.market:
+                categories["Team Goals"].append(rec)
+            else:
+                categories["Match Goals"].append(rec)
+        elif "Both Teams to Score" in rec.market:
+            categories["Both Teams to Score"].append(rec)
+        elif "Total Shots on Goal" in rec.market:
+            categories["Total Shots on Goal"].append(rec)
+        elif "Total Shots" in rec.market:
+            categories["Total Shots"].append(rec)
+        elif "Shots on Goal" in rec.market:
+            categories["Team Shots on Goal"].append(rec)
+        elif "Shots" in rec.market:
+            categories["Team Shots"].append(rec)
+        elif "Total Corners" in rec.market:
+            categories["Total Corners"].append(rec)
+        elif "Corners" in rec.market:
+            categories["Team Corners"].append(rec)
+        elif "Total Cards" in rec.market:
+            categories["Total Cards"].append(rec)
+        elif "Cards" in rec.market:
+            categories["Team Cards"].append(rec)
+        elif "Match Result" in rec.market:
+            categories["Match Result"].append(rec)
     
-    if medium_conf:
-        print("⚡ MEDIUM CONFIDENCE PICKS:")
-        print("━" * 35)
-        for i, rec in enumerate(medium_conf, 1):
-            # Market type emoji
-            market_emoji = {
-                "Goals": "⚽",
-                "BTTS": "🎯", 
-                "Corners": "📐",
-                "Cards": "🟨",
-                "Shots": "🏹"
-            }
+    # Display by category (nuovo sistema migliorato con sezioni dedicate)
+    category_icons = {
+        "Match Goals": "⚽",
+        "Team Goals": "🎯",
+        "Both Teams to Score": "🤝",
+        "Total Shots": "🏹",
+        "Total Shots on Goal": "🎯",
+        "Team Shots": "🏹",
+        "Team Shots on Goal": "🎯",
+        "Total Corners": "📐",
+        "Team Corners": "🚩",
+        "Total Cards": "🟨",
+        "Team Cards": "🟥",
+        "Match Result": "🏆"
+    }
+    
+    # Raggruppa in macro-sezioni
+    sections = {
+        "⚽ GOL E RISULTATO": ["Match Goals", "Team Goals", "Both Teams to Score", "Match Result"],
+        "🏹 TIRI": ["Total Shots", "Total Shots on Goal", "Team Shots", "Team Shots on Goal"],
+        "📐 CORNER": ["Total Corners", "Team Corners"],
+        "🟨 CARTELLINI": ["Total Cards", "Team Cards"]
+    }
+    
+    # Display per sezione
+    for section_name, section_categories in sections.items():
+        # Controlla se ci sono raccomandazioni in questa sezione
+        section_has_recs = any(categories.get(cat) for cat in section_categories)
+        if not section_has_recs:
+            continue
+        
+        # Intestazione sezione
+        print(f"│")
+        print(f"│ {'═' * 50}")
+        print(f"│ {section_name}")
+        print(f"│ {'═' * 50}")
+        
+        # Display categorie nella sezione
+        for category_name in section_categories:
+            recs = categories.get(category_name, [])
+            if not recs:
+                continue
+                
+            icon = category_icons[category_name]
+            print(f"│")
+            print(f"│ {icon} {category_name}:")
+            print(f"│ {'─' * 48}")
             
-            # Find appropriate emoji for market
-            emoji = "📊"
-            for key, value in market_emoji.items():
-                if key.lower() in rec.market.lower():
-                    emoji = value
-                    break
+            # Sort by confidence (HIGH first, then MEDIUM)
+            high_recs = [r for r in recs if r.confidence == "HIGH"]
+            medium_recs = [r for r in recs if r.confidence == "MEDIUM"]
             
-            print(f"{i}. {emoji} {rec.market}: {rec.selection}")
+            # Display HIGH confidence first
+            for rec in high_recs:
+                confidence_emoji = "🔥"
+                print(f"│   {confidence_emoji} {rec.market}: {rec.selection}")
+                
+                # Probability emoji (nuovo sistema unificato)
+                if rec.percentage >= 75:
+                    prob_emoji = "✅"
+                elif rec.percentage >= 60:
+                    prob_emoji = "📊"
+                else:
+                    prob_emoji = "❗"
+                
+                if hasattr(rec, 'real_odds') and rec.real_odds and hasattr(rec, 'bookmaker') and rec.bookmaker:
+                    # Display real odds with bookmaker
+                    print(f"│      💎 Quota: {rec.real_odds:.2f} ({rec.bookmaker}) • {prob_emoji} {rec.percentage:.1f}%")
+                else:
+                    # No real odds available
+                    print(f"│      {prob_emoji} {rec.percentage:.1f}% • ❌ Quote non disponibili")
+                
+                print(f"│      💬 {rec.reasoning}")
+                print("│")
             
-            # Show estimated vs real odds with color coding
-            percentage_color = "🟠" if rec.percentage >= 65 else "🟡" if rec.percentage >= 55 else "🟢"
-            odds_display = f"   💰 Est: {rec.odds_range} │ {percentage_color} {rec.percentage:.1f}%"
-            
-            if rec.real_odds:
-                value_emoji = {"EXCELLENT": "💎", "GOOD": "✨", "FAIR": "👍", "POOR": "⚠️"}.get(rec.value_rating, "")
-                odds_display += f"\n   🏦 Real: {rec.real_odds} ({rec.bookmaker}) {value_emoji} {rec.value_rating}"
-            print(odds_display)
-            
-            print(f"   💬 {rec.reasoning}")
-            print()
+            # Display MEDIUM confidence
+            for rec in medium_recs:
+                confidence_emoji = "⚡"
+                print(f"│   {confidence_emoji} {rec.market}: {rec.selection}")
+                
+                # Probability emoji (stesso sistema di HIGH)
+                if rec.percentage >= 75:
+                    prob_emoji = "✅"
+                elif rec.percentage >= 60:
+                    prob_emoji = "📊"
+                else:
+                    prob_emoji = "❗"
+                
+                if hasattr(rec, 'real_odds') and rec.real_odds and hasattr(rec, 'bookmaker') and rec.bookmaker:
+                    # Display real odds with bookmaker
+                    print(f"│      💎 Quota: {rec.real_odds:.2f} ({rec.bookmaker}) • {prob_emoji} {rec.percentage:.1f}%")
+                else:
+                    # No real odds available
+                    print(f"│      {prob_emoji} {rec.percentage:.1f}% • ❌ Quote non disponibili")
+                
+                print(f"│      💬 {rec.reasoning}")
+                print("│")
+    
+    print("└" + "─" * 52)
     
     # Exact score predictions
     if hasattr(betting_analysis, 'exact_scores') and betting_analysis.exact_scores:
@@ -344,27 +548,21 @@ def display_betting_analysis(betting_analysis):
 
 def display_betting_predictions(prediction):
     """Display betting predictions for a match."""
-    print("🔍 DEBUG: display_betting_predictions called")
     # This should never be called since we're already in async context
     print("❌ ERROR: display_betting_predictions called instead of display_betting_predictions_async!")
     return None
 
 def display_betting_predictions_sync(prediction):
     """Synchronous fallback version using historical data only."""
-    from core.betting_predictions import BettingPredictor
+    from core.betting_predictor import BettingPredictor
     
     predictor = BettingPredictor()
     betting_analysis = predictor._generate_betting_analysis_sync(prediction)
     
     # TODO: Integrate real odds in a proper async context
     
-    print("🔍 DEBUG: display_betting_predictions_sync called")
-    
     if not betting_analysis.recommendations:
-        print("🔍 DEBUG: No recommendations, returning early")
         return
-    
-    print("🔍 DEBUG: About to display betting recommendations")
     print("\n🎯 BETTING RECOMMENDATIONS")
     print("=" * 50)
     
@@ -436,12 +634,8 @@ def display_betting_predictions_sync(prediction):
             print()
     
     # Player predictions
-    print(f"🔍 DEBUG: player_predictions = {getattr(betting_analysis, 'player_predictions', 'NOT_FOUND')}")
     if hasattr(betting_analysis, 'player_predictions') and betting_analysis.player_predictions:
-        print("🔍 DEBUG: Calling display_player_predictions")
         display_player_predictions(betting_analysis.player_predictions)
-    else:
-        print("🔍 DEBUG: No player predictions found")
     
     # Summary
     print("📋 BETTING SUMMARY:")
@@ -729,7 +923,7 @@ def show_player_database_stats():
         for team in teams:
             top_players = db.get_team_top_cards(team, 2024, limit=2)
             if top_players:
-                print(f"\n⚪ {team}:")
+                print(f"\n⚽ {team}:")
                 for player in top_players:
                     print(f"  • {player.player_name}: {player.yellow_cards} cartellini in {player.appearances} partite")
         

@@ -125,26 +125,25 @@ footy-predictor matchday
 
 📋 SELEZIONA CAMPIONATO:
 ------------------------------
-1. 🇮🇹 Serie A (Italy)
-2. 🏴󠁧󠁢󠁥󠁮󠁧󠁿 Premier League (England)
-3. 🇪🇸 La Liga (Spain)
-4. 🇩🇪 Bundesliga (Germany)
-5. 🇫🇷 Ligue 1 (France)
-6. 🇳🇱 Eredivisie (Netherlands)
-7. 🇵🇹 Primeira Liga (Portugal)
-8. 🇧🇷 Serie A (Brazil)
+1. 🇮🇹 Italia - Serie A
+2. 🏴󠁧󠁢󠁥󠁮󠁧󠁿 Inghilterra - Premier League
+3. 🇪🇸 Spagna - La Liga
+4. 🇩🇪 Germania - Bundesliga
+5. 🇫🇷 Francia - Ligue 1
+6. 🏆 Europa - UEFA Champions League
+7. 🥈 Europa - UEFA Europa League
 0. Esci
 
 🎯 Scegli un campionato (1-8, 0 per uscire): 1
 
-⚽ PARTITE DISPONIBILI - 🇮🇹 Serie A
+⚽ PARTITE DISPONIBILI - 🇮🇹 Italia Serie A
 ==================================================
 
 📅 28/09/2025
 --------------------
- 1. ⚪ AS Roma vs Verona
+ 1. ⚽ AS Roma vs Verona
      🕐 13:00 | 🏟️ Stadio Olimpico
- 2. ⚪ Inter vs Milan
+ 2. ⚽ Inter vs Milan
      🕐 18:00 | 🏟️ San Siro
 
 🎯 Scegli una partita (1-2, 0 per tornare indietro): 1

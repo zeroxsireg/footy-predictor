@@ -1,8 +1,10 @@
-"""Main menu for choosing between live and pre-match analysis."""
+"""Main menu for choosing between live, pre-match, and daily league analysis."""
 
 import asyncio
 from cli.interactive import InteractiveMenu
 from cli.live_analysis import run_live_analysis
+from cli.daily_analysis import run_daily_league_analysis
+from cli.utility_menu import UtilityMenuCLI
 
 
 async def run_main_menu():
@@ -15,11 +17,13 @@ async def run_main_menu():
         print("\n📊 TIPO DI ANALISI:")
         print("-" * 25)
         print("1. 🔴 LIVE - Partite in corso")
-        print("2. ⏰ PRE-MATCH - Prossime partite") 
+        print("2. ⏰ PRE-MATCH - Prossime partite")
+        print("3. 🏆 DAILY - Analisi giornaliera campionato")
+        print("4. 🔧 UTILITY - Gestione dati e cache")
         print("0. Esci")
         
         try:
-            analysis_choice = input("\n🎯 Scegli il tipo di analisi (1-2, 0 per uscire): ").strip()
+            analysis_choice = input("\n🎯 Scegli il tipo di analisi (1-4, 0 per uscire): ").strip()
             
             if analysis_choice == "0":
                 print("👋 Arrivederci!")
@@ -35,6 +39,17 @@ async def run_main_menu():
                 print("=" * 35)
                 menu = InteractiveMenu()
                 await menu.run_prematch_menu()
+            elif analysis_choice == "3":
+                # Daily league analysis (new functionality)
+                print("\n🏆 MODALITÀ ANALISI GIORNATA ATTIVATA")
+                print("=" * 40)
+                await run_daily_league_analysis()
+            elif analysis_choice == "4":
+                # Utility menu for data management
+                print("\n🔧 MODALITÀ UTILITY ATTIVATA")
+                print("=" * 35)
+                utility_menu = UtilityMenuCLI()
+                await utility_menu.run()
             else:
                 print("❌ Scelta non valida. Riprova.")
                 continue

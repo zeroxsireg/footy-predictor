@@ -6,7 +6,7 @@ from datetime import datetime
 
 from adapters.football_api import FootballAPIClient
 from core.analyzer import MatchAnalyzer
-from core.betting_predictions import BettingPredictor
+from betting.orchestrator import BettingOrchestrator
 from cli.simple_main import display_betting_analysis
 
 
@@ -16,7 +16,7 @@ class LiveMatchAnalyzer:
     def __init__(self):
         self.api_client = FootballAPIClient()
         self.analyzer = MatchAnalyzer()
-        self.predictor = BettingPredictor()
+        self.orchestrator = BettingOrchestrator()
         
         # Top 5 European leagues + European competitions
         self.top_leagues = {

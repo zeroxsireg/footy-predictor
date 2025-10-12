@@ -13,6 +13,13 @@ class Settings(BaseSettings):
     default_league: str = "Serie A"
     default_season: int = 2025
     
+    # Redis Configuration
+    redis_host: str
+    redis_port: int = 6379
+    redis_password: str
+    redis_ssl: bool = True
+    redis_db: int = 0
+    
     # Preferred bookmaker for odds (Bet365 only)
     preferred_bookmakers: List[int] = [8]  # Bet365 only
     primary_bookmaker: int = 8  # Bet365

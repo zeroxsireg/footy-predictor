@@ -10,7 +10,7 @@ from datetime import datetime
 from core.models import TeamStats, Fixture
 from adapters.football_api import FootballAPIClient
 from adapters.odds_api import OddsAPIClient
-from utils.player_history_db import PlayerHistoryDatabase, PlayerHistoricalData
+# Removed dependency on player_history_db (file deleted during cleanup)
 
 
 @dataclass
@@ -34,7 +34,7 @@ class PlayerStats:
     fouls_drawn: int = 0
     
     # Historical data for enhanced predictions
-    historical_data: List[PlayerHistoricalData] = None
+    # historical_data: List[PlayerHistoricalData] = None  # Removed - file deleted during cleanup
     
     # Calculated rates
     @property
@@ -153,7 +153,7 @@ class PlayerCardPredictor:
     def __init__(self):
         self.api_client = FootballAPIClient()
         self.odds_client = OddsAPIClient()
-        self.history_db = PlayerHistoryDatabase()
+        # self.history_db = PlayerHistoryDatabase()  # Removed - file deleted during cleanup
     
     async def analyze_match_players(self, fixture: Fixture, league_id: int, season: int) -> MatchPlayerPredictions:
         """Analyze players for card predictions in a match."""

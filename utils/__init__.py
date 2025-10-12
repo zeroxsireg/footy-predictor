@@ -1,5 +1,5 @@
 """Utility modules for the footy predictor application."""
 
-from .database import ShotsCornerCache
+# Rimosso import di database.py (non più usato)
 
-__all__ = ["ShotsCornerCache"]
+__all__ = []

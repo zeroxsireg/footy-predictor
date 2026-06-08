@@ -47,7 +47,7 @@ class LeagueManager:
                 country_code='GB',
                 flag='🏴󠁧󠁢󠁥󠁮󠁧󠁿',
                 api_league_id=39,
-                enabled=True,
+                enabled=False,
                 priority=2
             ),
             'la_liga': LeagueConfig(
@@ -57,7 +57,7 @@ class LeagueManager:
                 country_code='ES',
                 flag='🇪🇸',
                 api_league_id=140,
-                enabled=True,
+                enabled=False,
                 priority=3
             ),
             # Le seguenti leghe sono disabilitate per ora
@@ -69,7 +69,7 @@ class LeagueManager:
                 country_code='DE',
                 flag='🇩🇪',
                 api_league_id=78,
-                enabled=True,  # ✅ ABILITATA
+                enabled=False,  # ❌ DISABILITATA
                 priority=4
             ),
             'ligue_1': LeagueConfig(
@@ -79,7 +79,7 @@ class LeagueManager:
                 country_code='FR',
                 flag='🇫🇷',
                 api_league_id=61,
-                enabled=True,  # ✅ ABILITATA
+                enabled=False,  # ❌ DISABILITATA
                 priority=5
             ),
             'champions_league': LeagueConfig(
@@ -89,7 +89,7 @@ class LeagueManager:
                 country_code='EU',
                 flag='🏆',
                 api_league_id=2,
-                enabled=True,  # ✅ Abilitata
+                enabled=False,  # ❌ Disabilitata
                 is_cup=True,  # Coppa europea
                 priority=10
             ),
@@ -100,7 +100,7 @@ class LeagueManager:
                 country_code='EU',
                 flag='🥈',
                 api_league_id=3,
-                enabled=True,  # ✅ Abilitata
+                enabled=False,  # ❌ Disabilitata
                 is_cup=True,  # Coppa europea
                 priority=11
             )

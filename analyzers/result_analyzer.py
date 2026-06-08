@@ -49,27 +49,37 @@ class ResultAnalyzer(BaseAnalyzer):
         home_draw_pct = (home_stats.draws / home_stats.matches_played * 100) if home_stats.matches_played > 0 else 33
         away_win_pct = (away_stats.wins / away_stats.matches_played * 100) if away_stats.matches_played > 0 else 33
         
-        # 1. Home Win (1)
-        home_win_prob = min(85, max(15, 
-            40 +  # Base probability casa
-            (home_form - away_form) * 5 +  # Forma recente
-            home_goal_diff * 10 +  # Goal difference
-            (home_win_pct - 33) * 0.5  # Win percentage storica
-        ))
-        
-        # 2. Draw (X)
-        balance_score = abs(home_form - away_form) + abs(home_goal_diff - away_goal_diff) * 5
-        draw_prob = min(40, max(10, 25 - balance_score * 2 + home_draw_pct * 0.3))
-        
-        # 3. Away Win (2)
-        away_win_prob = min(85, max(15,
-            40 +  # Base probability
-            (away_form - home_form) * 5 +  # Forma recente
-            away_goal_diff * 10 +  # Goal difference
-            (away_win_pct - 33) * 0.5 -  # Win percentage storica
-            5  # Penalità trasferta
-        ))
-        
+        # Punteggi grezzi (non ancora probabilità)
+        home_raw = (
+            40 +  # Base casa
+            (home_form - away_form) * 5 +
+            home_goal_diff * 10 +
+            (home_win_pct - 33) * 0.5
+        )
+        draw_raw = (
+            25
+            - abs(home_form - away_form) * 2
+            - abs(home_goal_diff - away_goal_diff) * 5
+            + home_draw_pct * 0.3
+        )
+        away_raw = (
+            35 +  # Base trasferta (penalità -5 rispetto a casa)
+            (away_form - home_form) * 5 +
+            away_goal_diff * 10 +
+            (away_win_pct - 33) * 0.5
+        )
+
+        # Clip negativi prima di normalizzare
+        home_raw = max(5.0, home_raw)
+        draw_raw = max(5.0, draw_raw)
+        away_raw = max(5.0, away_raw)
+
+        # Normalizza a 100% (le tre probabilità devono sommare a 1)
+        total = home_raw + draw_raw + away_raw
+        home_win_prob = round(home_raw / total * 100, 1)
+        draw_prob = round(draw_raw / total * 100, 1)
+        away_win_prob = round(away_raw / total * 100, 1)
+
         # Trova il risultato più probabile
         results = [
             ("1 (Home Win)", home_win_prob, f"{home_stats.team.name} favorita"),

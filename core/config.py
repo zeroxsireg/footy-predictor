@@ -1,5 +1,6 @@
 """Configuration management for the footy predictor CLI."""
 
+from functools import lru_cache
 from pydantic_settings import BaseSettings
 from typing import Optional, List
 
@@ -29,6 +30,7 @@ class Settings(BaseSettings):
         env_file_encoding = "utf-8"
 
 
+@lru_cache(maxsize=1)
 def get_settings() -> Settings:
-    """Get application settings."""
+    """Get application settings (cached singleton)."""
     return Settings()

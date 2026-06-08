@@ -7,7 +7,7 @@ from datetime import datetime
 from adapters.football_api import FootballAPIClient
 from core.analyzer import MatchAnalyzer
 from betting.orchestrator import BettingOrchestrator
-from cli.simple_main import display_betting_analysis
+from cli.match_display import render_betting_analysis as display_betting_analysis
 
 
 class LiveMatchAnalyzer:

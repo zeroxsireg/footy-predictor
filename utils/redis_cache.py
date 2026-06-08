@@ -353,19 +353,16 @@ class RedisFootballCache:
         
         return data_type in historical_types
     
-    def get_cache_info(self, key: str) -> Dict:
-        """Get cache information including TTL and metadata."""
+    def get_key_info(self, key: str) -> Dict:
+        """Get TTL and metadata for a specific Redis key."""
         if not self.is_connected():
             return {}
-        
+
         try:
-            # Get TTL
             ttl = self._redis.ttl(key)
-            
-            # Get data to check metadata
             data = self._get_with_decompression(key)
             metadata = data.get("_metadata", {}) if data else {}
-            
+
             return {
                 "key": key,
                 "ttl": ttl,
@@ -374,7 +371,7 @@ class RedisFootballCache:
                 "is_historical": self.is_historical_data(data) if data else False
             }
         except Exception as e:
-            logger.error(f"Error getting cache info for {key}: {e}")
+            logger.error(f"Error getting key info for {key}: {e}")
             return {}
     
     def get_memory_usage(self) -> Dict[str, Any]:

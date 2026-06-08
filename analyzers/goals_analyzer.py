@@ -50,145 +50,67 @@ class GoalsAnalyzer(BaseAnalyzer):
         return recommendations
     
     def _analyze_match_goals(self, home_stats: TeamStats, away_stats: TeamStats) -> List[BettingRecommendation]:
-        """Analizza Match Goals (totali partita)."""
+        """Analizza Match Goals (totali partita) con distribuzione di Poisson."""
         recommendations = []
-        
-        # Calcola gol attesi
-        home_goals_avg = home_stats.goals_per_game
-        away_goals_avg = away_stats.goals_per_game
-        total_goals_expected = home_goals_avg + away_goals_avg
-        
-        # STRATEGIA INTELLIGENTE: Genera SOLO la soglia ottimale in base ai gol attesi
-        # - Se >= 3.0 gol: Over 2.5 (quote migliori)
-        # - Se 2.0-3.0 gol: Over/Under 2.5 (quello con prob 60-85%)
-        # - Se < 2.0 gol: Under 2.5 (difese solide)
-        
-        # Calcola probabilità per tutte le soglie
-        if total_goals_expected >= 1.5:
-            over_1_5_prob = min(95, 50 + (total_goals_expected - 1.5) * 25)
-        else:
-            over_1_5_prob = max(5, (total_goals_expected / 1.5) * 50)
-        
-        if total_goals_expected >= 2.5:
-            over_2_5_prob = min(90, 50 + (total_goals_expected - 2.5) * 20)
-        else:
-            over_2_5_prob = max(10, (total_goals_expected / 2.5) * 50)
-        
-        if total_goals_expected >= 3.5:
-            over_3_5_prob = min(85, 50 + (total_goals_expected - 3.5) * 15)
-        else:
-            over_3_5_prob = max(5, (total_goals_expected / 3.5) * 50)
-        
+
+        total_goals_expected = home_stats.goals_per_game + away_stats.goals_per_game
+
+        # Probabilità Poisson per tutte le soglie
+        over_1_5_prob = self._poisson_over_prob(total_goals_expected, 1.5) * 100
+        over_2_5_prob = self._poisson_over_prob(total_goals_expected, 2.5) * 100
+        over_3_5_prob = self._poisson_over_prob(total_goals_expected, 3.5) * 100
         under_2_5_prob = 100 - over_2_5_prob
         under_3_5_prob = 100 - over_3_5_prob
-        
-        # NUOVA STRATEGIA: Seleziona la soglia PIÙ ALTA con prob >= 60%
-        # Se 3.4 gol attesi → Over 2.5 (non Over 1.5!)
+
         candidates = [
-            ("Over 3.5", over_3_5_prob),
-            ("Over 2.5", over_2_5_prob),
-            ("Under 2.5", under_2_5_prob),
-            ("Under 3.5", under_3_5_prob),
-            ("Over 1.5", over_1_5_prob)
+            ("Over 3.5", over_3_5_prob, 3),
+            ("Over 2.5", over_2_5_prob, 2),
+            ("Under 2.5", under_2_5_prob, 1),
+            ("Under 3.5", under_3_5_prob, 0.5),
+            ("Over 1.5", over_1_5_prob, 0),
         ]
-        
-        # Filtra candidati validi con STRATEGIA AGGRESSIVA
-        # Esclude Over 1.5 se esistono soglie più alte con prob >= 55%
-        has_higher_threshold = any(
-            prob >= 55 for sel, prob in candidates 
-            if sel in ["Over 2.5", "Over 3.5", "Under 2.5"]
-        )
-        
-        valid_candidates = []
-        for selection, prob in candidates:
-            # Escludi Over 1.5 se ci sono soglie migliori
-            if "Over 1.5" in selection and has_higher_threshold:
-                continue
-            
-            # Accetta soglie con prob >= 55% (più aggressivo)
-            if prob >= 55:
-                valid_candidates.append((selection, prob))
-        
-        # Ordina: preferisci Over più alti o Under più bassi (più value)
-        def get_priority(sel_prob):
-            selection, prob = sel_prob
-            if "Over 3.5" in selection:
-                return (3, prob)  # Massima priorità
-            elif "Over 2.5" in selection:
-                return (2, prob)
-            elif "Under 2.5" in selection:
-                return (1, prob)
-            elif "Under 3.5" in selection:
-                return (0.5, prob)
-            else:  # Over 1.5
-                return (0, prob)  # Minima priorità
-        
-        valid_candidates.sort(key=get_priority, reverse=True)
-        
-        # Genera raccomandazioni per i top 2 picks
-        for selection, prob in valid_candidates[:2]:  # TOP 2
+
+        # Scegli max 2 picks: soglia più alta con prob >= 55%,
+        # escludi Over 1.5 se esiste qualcosa di meglio
+        has_better = any(prob >= 55 for sel, prob, _ in candidates if sel != "Over 1.5")
+        valid = [
+            (sel, prob, pri) for sel, prob, pri in candidates
+            if prob >= 55 and not (sel == "Over 1.5" and has_better)
+        ]
+        valid.sort(key=lambda x: (x[2], x[1]), reverse=True)
+
+        for sel, prob, _ in valid[:2]:
             recommendations.append(self._create_recommendation(
                 market="Match Goals",
-                selection=selection,
+                selection=sel,
                 probability=prob,
-                reasoning=f"Attesi {total_goals_expected:.1f} gol: {prob:.1f}% {selection.lower()}"
+                reasoning=f"Attesi {total_goals_expected:.1f} gol (Poisson): {prob:.1f}% {sel.lower()}"
             ))
-        
+
         return recommendations
     
     def _analyze_team_goals(self, home_stats: TeamStats, away_stats: TeamStats) -> List[BettingRecommendation]:
-        """Analizza Team Goals (gol singola squadra)."""
+        """Analizza Team Goals (gol singola squadra) con distribuzione di Poisson."""
         recommendations = []
-        
-        home_goals_avg = home_stats.goals_per_game
-        away_goals_avg = away_stats.goals_per_game
-        home_conceded_avg = home_stats.goals_conceded_per_game
-        away_conceded_avg = away_stats.goals_conceded_per_game
-        
-        # Expected goals per squadra (considera anche difesa avversaria)
-        expected_home_goals = (home_goals_avg + away_conceded_avg) / 2
-        expected_away_goals = (away_goals_avg + home_conceded_avg) / 2
-        
-        # Home Team Over 1.5
-        home_over_1_5_prob = min(90, max(10, (expected_home_goals - 1.5) / 1.5 * 100))
-        if home_over_1_5_prob >= self.LOW_CONFIDENCE:
-            recommendations.append(self._create_recommendation(
-                market=f"{home_stats.team.name} Goals",
-                selection="Over 1.5",
-                probability=home_over_1_5_prob,
-                reasoning=f"{home_stats.team.name} attesi {expected_home_goals:.1f} gol"
-            ))
-        
-        # Home Team Over 2.5
-        home_over_2_5_prob = min(80, max(5, (expected_home_goals - 2.5) / 2.5 * 100))
-        if home_over_2_5_prob >= self.LOW_CONFIDENCE:
-            recommendations.append(self._create_recommendation(
-                market=f"{home_stats.team.name} Goals",
-                selection="Over 2.5",
-                probability=home_over_2_5_prob,
-                reasoning=f"{home_stats.team.name} alta produzione offensiva: {expected_home_goals:.1f} gol attesi"
-            ))
-        
-        # Away Team Over 1.5
-        away_over_1_5_prob = min(90, max(10, (expected_away_goals - 1.5) / 1.5 * 100))
-        if away_over_1_5_prob >= self.LOW_CONFIDENCE:
-            recommendations.append(self._create_recommendation(
-                market=f"{away_stats.team.name} Goals",
-                selection="Over 1.5",
-                probability=away_over_1_5_prob,
-                reasoning=f"{away_stats.team.name} attesi {expected_away_goals:.1f} gol"
-            ))
-        
-        # Away Team Over 2.5
-        away_over_2_5_prob = min(80, max(5, (expected_away_goals - 2.5) / 2.5 * 100))
-        if away_over_2_5_prob >= self.LOW_CONFIDENCE:
-            recommendations.append(self._create_recommendation(
-                market=f"{away_stats.team.name} Goals",
-                selection="Over 2.5",
-                probability=away_over_2_5_prob,
-                reasoning=f"{away_stats.team.name} alta produzione in trasferta: {expected_away_goals:.1f} gol attesi"
-            ))
-        
+
+        expected_home = (home_stats.goals_per_game + away_stats.goals_conceded_per_game) / 2
+        expected_away = (away_stats.goals_per_game + home_stats.goals_conceded_per_game) / 2
+
+        for team_stats, expected, label in [
+            (home_stats, expected_home, "in casa"),
+            (away_stats, expected_away, "in trasferta"),
+        ]:
+            name = team_stats.team.name
+            for threshold in [1.5, 2.5]:
+                prob = self._poisson_over_prob(expected, threshold) * 100
+                if prob >= self.LOW_CONFIDENCE:
+                    recommendations.append(self._create_recommendation(
+                        market=f"{name} Goals",
+                        selection=f"Over {threshold}",
+                        probability=prob,
+                        reasoning=f"{name} attesi {expected:.1f} gol {label} (Poisson)"
+                    ))
+
         return recommendations
     
     def _analyze_btts(self, home_stats: TeamStats, away_stats: TeamStats) -> List[BettingRecommendation]:

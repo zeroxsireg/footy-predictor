@@ -8,7 +8,7 @@ from core.config import get_settings
 from adapters.football_api import FootballAPIClient, FootballAPIError
 from core.models import Fixture
 from core.analyzer import MatchAnalyzer
-from cli.simple_main import display_matchday
+from cli.match_display import display_matchday
 from config.leagues import get_league_manager
 
 

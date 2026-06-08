@@ -20,8 +20,13 @@ class DailyPick:
     league: str
     real_odds: Optional[float] = None
     bookmaker: Optional[str] = None
-    player_team: Optional[str] = None  # Team the player plays for (for player card picks)
-    odds_range: Optional[str] = None  # DEPRECATO: mantenuto per compatibilità, NON USARE
+    player_team: Optional[str] = None
+    # Edge / Kelly fields (populated when real_odds is available)
+    edge: Optional[float] = None
+    ev_percent: Optional[float] = None
+    kelly_quarter: Optional[float] = None
+    verdict: Optional[str] = None
+    odds_range: Optional[str] = None  # DEPRECATO
     
     @property
     def confidence_score(self) -> float:

@@ -4,6 +4,7 @@ Base Analyzer - Classe base per tutti gli analyzer di mercato.
 Fornisce funzionalità comuni e struttura standard.
 """
 
+import math
 from typing import List
 from abc import ABC, abstractmethod
 from core.models import TeamStats
@@ -98,6 +99,29 @@ class BaseAnalyzer(ABC):
             percentage=probability
         )
     
+    @staticmethod
+    def _poisson_over_prob(lambda_val: float, threshold: float) -> float:
+        """
+        P(X > threshold) con distribuzione di Poisson.
+
+        P(X > 2.5) = P(X >= 3) = 1 - P(X=0) - P(X=1) - P(X=2)
+
+        Args:
+            lambda_val: valore atteso (λ) dell'evento (es. gol, corner, cartellini)
+            threshold:  soglia non-intera (es. 2.5, 4.5)
+
+        Returns:
+            probabilità in [0.0, 1.0]
+        """
+        if lambda_val <= 0:
+            return 0.0
+        k_max = int(threshold)  # floor(2.5) = 2
+        prob_under = sum(
+            lambda_val**k * math.exp(-lambda_val) / math.factorial(k)
+            for k in range(k_max + 1)
+        )
+        return max(0.0, min(1.0, 1.0 - prob_under))
+
     def _validate_stats(self, home_stats: TeamStats, away_stats: TeamStats) -> bool:
         """
         Valida che le statistiche necessarie siano disponibili.

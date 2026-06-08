@@ -1,155 +1,129 @@
 """
-Betting Orchestrator - Coordina tutti gli analyzer di mercato.
+Betting Orchestrator — coordinates all market analyzers.
 
-Responsabile di:
-- Inizializzare tutti gli analyzer
-- Coordinare l'analisi
-- Aggregare le raccomandazioni
-- Generare summary
+Uses the ANALYZER_REGISTRY as its plugin list.  To enable or disable a
+market, edit the registry in analyzers/__init__.py — no changes needed here.
+
+To run with a custom subset at call time:
+    orchestrator = BettingOrchestrator(enabled={"goals": GoalsAnalyzer})
 """
 
-from typing import List, Dict
+from typing import Dict, List, Optional, Type
+
 from core.models import TeamStats
 from core.betting_models import BettingRecommendation, MatchBettingAnalysis, ExactScorePrediction
 
-from analyzers.goals_analyzer import GoalsAnalyzer
-from analyzers.shots_analyzer import ShotsAnalyzer
-from analyzers.corners_analyzer import CornersAnalyzer
-from analyzers.cards_analyzer import CardsAnalyzer
-from analyzers.result_analyzer import ResultAnalyzer
+from analyzers import ANALYZER_REGISTRY
+from analyzers.base import BaseAnalyzer
 from analyzers.score_analyzer import ScoreAnalyzer
-from analyzers.player_cards_analyzer import PlayerCardsAnalyzer
 
 
 class BettingOrchestrator:
     """
-    Orchestrator centrale per analisi betting.
-    
-    Coordina tutti i moduli analyzer e genera analisi completa.
-    Ogni analyzer è responsabile solo del suo mercato specifico.
+    Coordinates all registered market analyzers and aggregates results.
+
+    Lifecycle: instantiate once, call analyze_match() for each fixture.
+    Stateless across calls — safe to reuse.
     """
-    
-    def __init__(self):
-        """Inizializza tutti gli analyzer."""
-        self.goals_analyzer = GoalsAnalyzer()
-        self.shots_analyzer = ShotsAnalyzer()
-        self.corners_analyzer = CornersAnalyzer()
-        self.cards_analyzer = CardsAnalyzer()
-        self.result_analyzer = ResultAnalyzer()
-        self.score_analyzer = ScoreAnalyzer()
-        self.player_cards_analyzer = PlayerCardsAnalyzer()  # Disabilitato by default
-    
-    def analyze_match(self, home_stats: TeamStats, away_stats: TeamStats,
-                     home_position: int = None, away_position: int = None) -> MatchBettingAnalysis:
+
+    def __init__(self, enabled: Optional[Dict[str, Optional[Type[BaseAnalyzer]]]] = None):
         """
-        Genera analisi betting completa per una partita.
-        
         Args:
-            home_stats: Statistiche squadra casa
-            away_stats: Statistiche squadra trasferta
-            home_position: Posizione in classifica casa (opzionale)
-            away_position: Posizione in classifica trasferta (opzionale)
-            
-        Returns:
-            MatchBettingAnalysis: Analisi completa con tutte le raccomandazioni
+            enabled: Override the default ANALYZER_REGISTRY.
+                     Pass None to use all registered analyzers.
+                     Pass a subset dict to enable only specific markets.
+                     Setting a value to None disables that key.
         """
-        all_recommendations = []
-        
-        # Esegui analisi modulo per modulo (silent mode)
-        all_recommendations.extend(
-            self.goals_analyzer.analyze(home_stats, away_stats)
-        )
-        
-        all_recommendations.extend(
-            self.shots_analyzer.analyze(home_stats, away_stats)
-        )
-        
-        all_recommendations.extend(
-            self.corners_analyzer.analyze(home_stats, away_stats)
-        )
-        
-        all_recommendations.extend(
-            self.cards_analyzer.analyze(home_stats, away_stats,
-                                       home_position=home_position,
-                                       away_position=away_position)
-        )
-        
-        result_recs = self.result_analyzer.analyze(home_stats, away_stats)
-        all_recommendations.extend(result_recs)
-        
-        # Estrai il risultato previsto per filtrare gli exact scores
-        predicted_result = None
-        if result_recs:
-            # Il result_analyzer restituisce solo 1 raccomandazione (la più probabile)
-            selection = result_recs[0].selection
-            if "Home Win" in selection or selection.startswith("1"):
-                predicted_result = "1"
-            elif "Draw" in selection or selection.startswith("X"):
-                predicted_result = "X"
-            elif "Away Win" in selection or selection.startswith("2"):
-                predicted_result = "2"
-        
-        exact_scores = self.score_analyzer.predict_exact_scores(
+        registry = enabled if enabled is not None else ANALYZER_REGISTRY
+        self._analyzers: Dict[str, BaseAnalyzer] = {
+            name: cls()
+            for name, cls in registry.items()
+            if cls is not None
+        }
+        self._score_analyzer = ScoreAnalyzer()
+
+    # ── public ────────────────────────────────────────────────────────────────
+
+    def analyze_match(
+        self,
+        home_stats: TeamStats,
+        away_stats: TeamStats,
+        home_position: int = None,
+        away_position: int = None,
+    ) -> MatchBettingAnalysis:
+        """Run all active analyzers and return a combined betting analysis."""
+        all_recommendations: List[BettingRecommendation] = []
+
+        for name, analyzer in self._analyzers.items():
+            try:
+                recs = analyzer.analyze(
+                    home_stats, away_stats,
+                    home_position=home_position,
+                    away_position=away_position,
+                )
+                all_recommendations.extend(recs)
+            except Exception as exc:
+                print(f"⚠️ Analyzer '{name}' failed: {exc}")
+
+        # ScoreAnalyzer runs separately — it needs the predicted result from ResultAnalyzer
+        predicted_result = self._infer_result(all_recommendations)
+        exact_scores = self._score_analyzer.predict_exact_scores(
             home_stats, away_stats, top_n=3, predicted_result=predicted_result
         )
-        
-        # Genera summary
-        summary = self._generate_summary(all_recommendations, exact_scores)
-        
-        # Match info string
-        match_info = f"{home_stats.team.name} vs {away_stats.team.name}"
-        
+
         return MatchBettingAnalysis(
-            match_info=match_info,
+            match_info=f"{home_stats.team.name} vs {away_stats.team.name}",
             recommendations=all_recommendations,
             exact_scores=exact_scores,
-            summary=summary,
-            player_predictions=None  # Player cards per dopo
+            summary=self._generate_summary(all_recommendations, exact_scores),
+            player_predictions=None,
         )
-    
-    def _generate_summary(self, recommendations: List[BettingRecommendation],
-                         exact_scores: List[ExactScorePrediction]) -> Dict:
-        """Genera summary dell'analisi."""
-        high_conf = len([r for r in recommendations if r.confidence == "HIGH"])
-        medium_conf = len([r for r in recommendations if r.confidence == "MEDIUM"])
-        low_conf = len([r for r in recommendations if r.confidence == "LOW"])
-        
-        # Top pick = raccomandazione con probability più alta
-        top_pick = None
-        top_market = None
-        if recommendations:
-            sorted_recs = sorted(recommendations, key=lambda x: x.percentage, reverse=True)
-            top_pick = f"{sorted_recs[0].market}: {sorted_recs[0].selection}"
-            top_market = sorted_recs[0].market
-        
-        # Most likely score
-        most_likely_score = None
-        if exact_scores:
-            most_likely_score = exact_scores[0].score
-        
-        return {
-            'total_recommendations': len(recommendations),
-            'high_confidence': high_conf,
-            'medium_confidence': medium_conf,
-            'low_confidence': low_conf,
-            'top_pick': top_pick or "None",
-            'top_market': top_market or "None",
-            'most_likely_score': most_likely_score or "N/A"
-        }
-    
-    def get_required_stats_all(self) -> Dict[str, List[str]]:
-        """
-        Ritorna tutte le statistiche necessarie per tutti i moduli.
-        
-        Returns:
-            Dict con analyzer_name -> lista stats necessarie
-        """
-        return {
-            'goals': self.goals_analyzer.get_required_stats(),
-            'shots': self.shots_analyzer.get_required_stats(),
-            'corners': self.corners_analyzer.get_required_stats(),
-            'cards': self.cards_analyzer.get_required_stats(),
-            'result': self.result_analyzer.get_required_stats(),
-            'score': self.score_analyzer.get_required_stats()
-        }
 
+    def active_analyzers(self) -> List[str]:
+        """Return names of currently active analyzers (for display/logging)."""
+        return list(self._analyzers.keys())
+
+    def get_required_stats_all(self) -> Dict[str, List[str]]:
+        """Return {analyzer_name: [required_stat_names]} for all active analyzers."""
+        return {name: az.get_required_stats() for name, az in self._analyzers.items()}
+
+    # ── private ───────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _infer_result(recs: List[BettingRecommendation]) -> Optional[str]:
+        """Derive predicted match result ('1'/'X'/'2') from ResultAnalyzer output."""
+        for rec in recs:
+            if rec.market == "Match Result":
+                sel = rec.selection
+                if "Home Win" in sel or sel.startswith("1"):
+                    return "1"
+                if "Draw" in sel or sel.startswith("X"):
+                    return "X"
+                if "Away Win" in sel or sel.startswith("2"):
+                    return "2"
+        return None
+
+    @staticmethod
+    def _generate_summary(
+        recs: List[BettingRecommendation],
+        exact_scores: List[ExactScorePrediction],
+    ) -> Dict:
+        high = sum(1 for r in recs if r.confidence == "HIGH")
+        medium = sum(1 for r in recs if r.confidence == "MEDIUM")
+        low = sum(1 for r in recs if r.confidence == "LOW")
+
+        top_pick = top_market = None
+        if recs:
+            best = max(recs, key=lambda r: r.percentage)
+            top_pick = f"{best.market}: {best.selection}"
+            top_market = best.market
+
+        return {
+            "total_recommendations": len(recs),
+            "high_confidence": high,
+            "medium_confidence": medium,
+            "low_confidence": low,
+            "top_pick": top_pick or "None",
+            "top_market": top_market or "None",
+            "most_likely_score": exact_scores[0].score if exact_scores else "N/A",
+        }

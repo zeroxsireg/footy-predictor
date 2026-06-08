@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "market-mechanics-betting": {
+      "source": "lyndonkl/claude",
+      "sourceType": "github",
+      "skillPath": "skills/market-mechanics-betting/SKILL.md",
+      "computedHash": "6fe61fae92723155a9217ae72693cebb626243ea972a300514ee6e69d4280e61"
+    }
+  }
+}

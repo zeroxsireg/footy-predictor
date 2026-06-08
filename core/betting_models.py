@@ -12,11 +12,17 @@ class BettingRecommendation:
     selection: str
     confidence: str  # "HIGH", "MEDIUM", "LOW"
     reasoning: str
-    percentage: float  # Probability percentage
-    real_odds: Optional[float] = None  # Real odds from bookmakers
-    bookmaker: Optional[str] = None  # Bookmaker name
-    value_rating: Optional[str] = None  # "EXCELLENT", "GOOD", "FAIR", "POOR"
-    odds_range: Optional[str] = None  # DEPRECATO: mantenuto per compatibilità
+    percentage: float  # Probability percentage (0-100)
+    real_odds: Optional[float] = None   # Real odds from bookmakers
+    bookmaker: Optional[str] = None     # Bookmaker name
+    # Edge / Kelly fields (populated when real_odds is available)
+    edge: Optional[float] = None        # Our prob - implied prob (es. 0.12 = +12%)
+    ev_percent: Optional[float] = None  # Expected Value % (es. +11.5)
+    kelly_quarter: Optional[float] = None  # Quarter Kelly fraction (es. 0.031 = 3.1%)
+    verdict: Optional[str] = None       # "BET" | "VALUE" | "PASS"
+    # Legacy (never used, kept for dataclass compatibility)
+    value_rating: Optional[str] = None
+    odds_range: Optional[str] = None
 
 
 @dataclass

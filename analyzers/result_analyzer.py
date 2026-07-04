@@ -25,30 +25,27 @@ class ResultAnalyzer(BaseAnalyzer):
             'matches_played'
         ]
     
-    def analyze(self, home_stats: TeamStats, away_stats: TeamStats, **kwargs) -> List[BettingRecommendation]:
+    def result_probabilities(self, home_stats: TeamStats, away_stats: TeamStats) -> dict:
         """
-        Genera raccomandazione per il risultato finale (1X2).
-        
-        Restituisce SOLO il risultato più probabile, non tutti e 3.
-        
+        Probabilità 1X2 normalizzate, come frazioni in [0, 1] che sommano a 1.
+
+        Single source of truth per il mercato risultato: sia analyze() (per le
+        raccomandazioni) sia il backtest consumano questo metodo.
+
         Returns:
-            Lista con UN SOLO pronostico (il più probabile)
+            {"1": p_home, "X": p_draw, "2": p_away}
         """
-        if not self._validate_stats(home_stats, away_stats):
-            return []
-        
-        # Calcola forza delle squadre
         home_form = home_stats.recent_form_points
         away_form = away_stats.recent_form_points
-        
+
         home_goal_diff = home_stats.goal_difference_per_game
         away_goal_diff = away_stats.goal_difference_per_game
-        
+
         # Percentuali vittoria/pareggio/sconfitta storiche
         home_win_pct = (home_stats.wins / home_stats.matches_played * 100) if home_stats.matches_played > 0 else 33
         home_draw_pct = (home_stats.draws / home_stats.matches_played * 100) if home_stats.matches_played > 0 else 33
         away_win_pct = (away_stats.wins / away_stats.matches_played * 100) if away_stats.matches_played > 0 else 33
-        
+
         # Punteggi grezzi (non ancora probabilità)
         home_raw = (
             40 +  # Base casa
@@ -74,11 +71,30 @@ class ResultAnalyzer(BaseAnalyzer):
         draw_raw = max(5.0, draw_raw)
         away_raw = max(5.0, away_raw)
 
-        # Normalizza a 100% (le tre probabilità devono sommare a 1)
+        # Normalizza (le tre probabilità devono sommare a 1)
         total = home_raw + draw_raw + away_raw
-        home_win_prob = round(home_raw / total * 100, 1)
-        draw_prob = round(draw_raw / total * 100, 1)
-        away_win_prob = round(away_raw / total * 100, 1)
+        return {
+            "1": home_raw / total,
+            "X": draw_raw / total,
+            "2": away_raw / total,
+        }
+
+    def analyze(self, home_stats: TeamStats, away_stats: TeamStats, **kwargs) -> List[BettingRecommendation]:
+        """
+        Genera raccomandazione per il risultato finale (1X2).
+
+        Restituisce SOLO il risultato più probabile, non tutti e 3.
+
+        Returns:
+            Lista con UN SOLO pronostico (il più probabile)
+        """
+        if not self._validate_stats(home_stats, away_stats):
+            return []
+
+        probs = self.result_probabilities(home_stats, away_stats)
+        home_win_prob = round(probs["1"] * 100, 1)
+        draw_prob = round(probs["X"] * 100, 1)
+        away_win_prob = round(probs["2"] * 100, 1)
 
         # Trova il risultato più probabile
         results = [

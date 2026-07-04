@@ -46,9 +46,34 @@ class GoalsAnalyzer(BaseAnalyzer):
         
         # 3. BTTS
         recommendations.extend(self._analyze_btts(home_stats, away_stats))
-        
+
         return recommendations
-    
+
+    # ── pure probability methods (single source of truth) ──────────────────────
+    # These return raw probabilities in [0.0, 1.0].  The _analyze_* methods below
+    # consume them to build (filtered) recommendations; the backtest consumes them
+    # directly to score every match.  Keep the maths here and nowhere else.
+
+    def match_goals_probabilities(self, home_stats: TeamStats, away_stats: TeamStats) -> dict:
+        """P(Over N) for total match goals via Poisson, as fractions in [0, 1]."""
+        lam = home_stats.goals_per_game + away_stats.goals_per_game
+        return {
+            "over_1_5": self._poisson_over_prob(lam, 1.5),
+            "over_2_5": self._poisson_over_prob(lam, 2.5),
+            "over_3_5": self._poisson_over_prob(lam, 3.5),
+        }
+
+    def btts_yes_probability(self, home_stats: TeamStats, away_stats: TeamStats) -> float:
+        """P(Both Teams To Score = Yes) as a fraction in [0, 1]."""
+        home_scores = 100 - ((home_stats.failed_to_score / home_stats.matches_played) * 100 if home_stats.matches_played > 0 else 50)
+        away_scores = 100 - ((away_stats.failed_to_score / away_stats.matches_played) * 100 if away_stats.matches_played > 0 else 50)
+        btts_yes = (home_scores * away_scores) / 100
+
+        home_concedes = 100 - ((home_stats.clean_sheets / home_stats.matches_played) * 100 if home_stats.matches_played > 0 else 50)
+        away_concedes = 100 - ((away_stats.clean_sheets / away_stats.matches_played) * 100 if away_stats.matches_played > 0 else 50)
+        btts_adjusted = (btts_yes + ((home_concedes + away_concedes) / 2)) / 2
+        return btts_adjusted / 100
+
     def _analyze_match_goals(self, home_stats: TeamStats, away_stats: TeamStats) -> List[BettingRecommendation]:
         """Analizza Match Goals (totali partita) con distribuzione di Poisson."""
         recommendations = []
@@ -56,9 +81,10 @@ class GoalsAnalyzer(BaseAnalyzer):
         total_goals_expected = home_stats.goals_per_game + away_stats.goals_per_game
 
         # Probabilità Poisson per tutte le soglie
-        over_1_5_prob = self._poisson_over_prob(total_goals_expected, 1.5) * 100
-        over_2_5_prob = self._poisson_over_prob(total_goals_expected, 2.5) * 100
-        over_3_5_prob = self._poisson_over_prob(total_goals_expected, 3.5) * 100
+        probs = self.match_goals_probabilities(home_stats, away_stats)
+        over_1_5_prob = probs["over_1_5"] * 100
+        over_2_5_prob = probs["over_2_5"] * 100
+        over_3_5_prob = probs["over_3_5"] * 100
         under_2_5_prob = 100 - over_2_5_prob
         under_3_5_prob = 100 - over_3_5_prob
 
@@ -116,19 +142,9 @@ class GoalsAnalyzer(BaseAnalyzer):
     def _analyze_btts(self, home_stats: TeamStats, away_stats: TeamStats) -> List[BettingRecommendation]:
         """Analizza Both Teams To Score."""
         recommendations = []
-        
-        # Calcola percentuali da attributi interi
-        home_scores_prob = 100 - ((home_stats.failed_to_score / home_stats.matches_played) * 100 if home_stats.matches_played > 0 else 50)
-        away_scores_prob = 100 - ((away_stats.failed_to_score / away_stats.matches_played) * 100 if away_stats.matches_played > 0 else 50)
-        
-        # BTTS Yes = entrambe segnano
-        btts_yes_prob = (home_scores_prob * away_scores_prob) / 100
-        
-        # Aggiusta per clean sheets (se squadre subiscono spesso)
-        home_concedes_prob = 100 - ((home_stats.clean_sheets / home_stats.matches_played) * 100 if home_stats.matches_played > 0 else 50)
-        away_concedes_prob = 100 - ((away_stats.clean_sheets / away_stats.matches_played) * 100 if away_stats.matches_played > 0 else 50)
-        btts_adjusted = (btts_yes_prob + ((home_concedes_prob + away_concedes_prob) / 2)) / 2
-        
+
+        btts_adjusted = self.btts_yes_probability(home_stats, away_stats) * 100
+
         if btts_adjusted >= self.LOW_CONFIDENCE:
             recommendations.append(self._create_recommendation(
                 market="Both Teams to Score",

@@ -58,11 +58,25 @@ Thumbs.db
 *.bak
 *.old
 
-# Test files
-test_*.py
-*_test.py
-tests/
-test/
+# Backtest cache (fetched season data — regenerable, not source)
+backtest/data/
+
+# Test / coverage artifacts
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# Ad-hoc / scratch test scripts left in the repo root (not the real suite)
+/test_*.py
+/*_test.py
+/test/
+
+# NOTE: the maintained pytest suite lives in tests/ and IS tracked.
+# The negations below re-include it despite the patterns above.
+!tests/
+!tests/**
 
 # Debug files
 debug_*.py

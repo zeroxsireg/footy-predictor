@@ -35,8 +35,37 @@ class MulticlassMarketResult:
     market: str
     n: int
     brier: float                # multiclass Brier (sum over classes, averaged)
+    rps: float                  # Ranked Probability Score (ordinal-aware, lower=better)
     hit_rate: float             # argmax prediction == actual outcome
     per_class_base_rate: Dict[str, float]
+
+
+# Ordered 1X2 classes: home(1) < draw(X) < away(2). Order matters for RPS.
+_ORDERED_1X2 = ("1", "X", "2")
+
+
+def rps_1x2(probs: Dict[str, float], actual: str) -> float:
+    """
+    Ranked Probability Score for one ordered 1X2 forecast (0 = perfect).
+
+    Penalises errors by ordinal distance: predicting a home win when the away
+    side wins is punished more than predicting a draw. The academic-standard
+    metric for 1X2 (research: RPS beats plain accuracy/Brier here).
+    """
+    cum_p = 0.0
+    cum_o = 0.0
+    total = 0.0
+    for c in _ORDERED_1X2[:-1]:          # r-1 cumulative steps
+        cum_p += probs.get(c, 0.0)
+        cum_o += 1.0 if c == actual else 0.0
+        total += (cum_p - cum_o) ** 2
+    return total / (len(_ORDERED_1X2) - 1)
+
+
+def rps_average(rows: List[Tuple[Dict[str, float], str]]) -> float:
+    if not rows:
+        return 0.0
+    return sum(rps_1x2(p, o) for p, o in rows) / len(rows)
 
 
 def score_binary(market: str, pairs: List[Tuple[float, int]], n_bins: int = 10) -> BinaryMarketResult:
@@ -96,7 +125,7 @@ def score_multiclass(
     n = len(rows)
     classes = ("1", "X", "2")
     if n == 0:
-        return MulticlassMarketResult(market, 0, 0.0, 0.0, {c: 0.0 for c in classes})
+        return MulticlassMarketResult(market, 0, 0.0, 0.0, 0.0, {c: 0.0 for c in classes})
 
     brier_sum = 0.0
     hits = 0
@@ -112,6 +141,7 @@ def score_multiclass(
         market=market,
         n=n,
         brier=round(brier_sum / n, 4),
+        rps=round(rps_average(rows), 4),
         hit_rate=round(hits / n, 4),
         per_class_base_rate={c: round(class_counts[c] / n, 4) for c in classes},
     )

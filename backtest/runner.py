@@ -6,9 +6,9 @@ printing lives in report_text() and the CLI in run_backtest.py at repo root.
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Callable, Dict, List, Tuple
 
-from backtest.engine import iter_scored_matches, predict_match
+from backtest.engine import iter_scored_matches, iter_match_contexts, predict_match
 from backtest.metrics import (
     BinaryMarketResult,
     MulticlassMarketResult,
@@ -77,4 +77,58 @@ def run_backtest(
         total_matches_scored=scored,
         binary=binary_results,
         result_1x2=result_1x2,
+    )
+
+
+@dataclass
+class ComparisonReport:
+    league_id: int
+    season: int
+    min_matches: int
+    total_matches_scored: int
+    reports: Dict[str, BacktestReport]   # model name -> its scored report
+
+
+def run_comparison(
+    fixtures: List[Dict],
+    models: Dict[str, Callable],
+    league_id: int = 0,
+    season: int = 0,
+    min_matches: int = 4,
+) -> ComparisonReport:
+    """
+    Replay the season ONCE and score every model on the same matches, so the
+    comparison is apples-to-apples (identical sample, identical outcomes).
+    """
+    names = list(models)
+    binary_pairs = {n: {m: [] for m in _BINARY_MARKETS} for n in names}
+    result_rows = {n: [] for n in names}
+    scored = 0
+
+    for ctx in iter_match_contexts(fixtures, min_matches=min_matches):
+        match = ctx.scored
+        scored += 1
+        for name, model in models.items():
+            preds = model(ctx)
+            for market, key in _BINARY_MARKETS.items():
+                binary_pairs[name][market].append((preds[key], _outcome(match, key)))
+            result_rows[name].append((
+                {"1": preds["result_1"], "X": preds["result_X"], "2": preds["result_2"]},
+                match.result,
+            ))
+
+    reports = {
+        name: BacktestReport(
+            league_id=league_id,
+            season=season,
+            min_matches=min_matches,
+            total_matches_scored=scored,
+            binary=[score_binary(m, binary_pairs[name][m]) for m in _BINARY_MARKETS],
+            result_1x2=score_multiclass("Match Result (1X2)", result_rows[name]),
+        )
+        for name in names
+    }
+    return ComparisonReport(
+        league_id=league_id, season=season, min_matches=min_matches,
+        total_matches_scored=scored, reports=reports,
     )

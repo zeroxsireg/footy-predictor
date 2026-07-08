@@ -53,9 +53,13 @@ async def fetch_season_fixtures(league_id: int, season: int) -> List[Dict[str, A
     records: List[Dict[str, Any]] = []
     page = 1
     while True:
-        data = await http.request(
-            "/fixtures", {"league": league_id, "season": season, "page": page}
-        )
+        # Only send `page` for follow-up pages — /fixtures rejects the param
+        # ("The Page field do not exist.") on single-page season responses.
+        params: Dict[str, Any] = {"league": league_id, "season": season}
+        if page > 1:
+            params["page"] = page
+        data = await http.request("/fixtures", params)
+
         for fd in data.get("response", []):
             rec = _normalize_fixture(fd)
             if rec:

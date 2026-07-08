@@ -20,8 +20,9 @@ import os
 import sys
 
 from backtest.data import get_season_fixtures, cache_path
-from backtest.runner import run_backtest
-from backtest.report import print_report
+from backtest.runner import run_backtest, run_comparison
+from backtest.report import print_report, print_comparison
+from backtest.models import MODELS
 
 
 def parse_args():
@@ -31,6 +32,8 @@ def parse_args():
     p.add_argument("--min-matches", type=int, default=4,
                    help="Skip predictions until both teams have played this many games")
     p.add_argument("--refresh", action="store_true", help="Re-download from the API even if cached")
+    p.add_argument("--compare", action="store_true",
+                   help="Compare all models (baseline vs Poisson strength vs Dixon-Coles)")
     return p.parse_args()
 
 
@@ -59,10 +62,17 @@ def main():
         print("❌ Nessuna partita conclusa: stagione non ancora giocata o dati vuoti.")
         sys.exit(1)
 
-    report = run_backtest(
-        fixtures, league_id=args.league, season=args.season, min_matches=args.min_matches
-    )
-    print_report(report)
+    if args.compare:
+        cmp = run_comparison(
+            fixtures, MODELS, league_id=args.league, season=args.season,
+            min_matches=args.min_matches,
+        )
+        print_comparison(cmp)
+    else:
+        report = run_backtest(
+            fixtures, league_id=args.league, season=args.season, min_matches=args.min_matches
+        )
+        print_report(report)
 
 
 if __name__ == "__main__":

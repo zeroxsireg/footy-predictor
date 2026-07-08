@@ -3,13 +3,19 @@ Point-in-time replay engine.
 
 The golden rule of a valid backtest: to predict match k, use ONLY information
 available before match k. This module enforces that structurally — for every
-match it (1) snapshots both teams' accumulated stats, (2) predicts, and only
-THEN (3) folds the actual result back into the accumulators. Because the update
-always happens after the prediction, future data can never leak into the past.
+match it (1) snapshots both teams' accumulated stats + the league averages,
+(2) predicts, and only THEN (3) folds the actual result back in. Because the
+update always happens after the prediction, future data can never leak into
+the past.
+
+Two consumption paths share the same replay:
+- iter_scored_matches  -> ScoredMatch    (overall stats; used by the baseline)
+- iter_match_contexts  -> MatchContext   (adds home/away splits + league
+                                          averages; used by the strength models)
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, Iterator, List
+from typing import Dict, Iterator, List, Tuple
 
 from core.models import Team, TeamStats
 from analyzers.goals_analyzer import GoalsAnalyzer
@@ -30,6 +36,13 @@ class TeamAccumulator:
     clean_sheets: int = 0
     failed_to_score: int = 0
     form: List[str] = field(default_factory=list)  # chronological "W"/"D"/"L"
+    # home/away splits (needed by the strength models)
+    home_matches: int = 0
+    home_goals_for: int = 0
+    home_goals_against: int = 0
+    away_matches: int = 0
+    away_goals_for: int = 0
+    away_goals_against: int = 0
 
     def to_team_stats(self) -> TeamStats:
         """Snapshot the current tally as a TeamStats (what the model consumes)."""
@@ -51,7 +64,7 @@ class TeamAccumulator:
             failed_to_score=self.failed_to_score,
         )
 
-    def update(self, scored: int, conceded: int) -> None:
+    def update(self, scored: int, conceded: int, is_home: bool | None = None) -> None:
         """Fold one played match into the tally (called AFTER predicting it)."""
         self.matches_played += 1
         self.goals_for += scored
@@ -69,6 +82,38 @@ class TeamAccumulator:
         else:
             self.losses += 1
             self.form.append("L")
+
+        if is_home is True:
+            self.home_matches += 1
+            self.home_goals_for += scored
+            self.home_goals_against += conceded
+        elif is_home is False:
+            self.away_matches += 1
+            self.away_goals_for += scored
+            self.away_goals_against += conceded
+
+
+@dataclass
+class LeagueState:
+    """League-wide running totals, used for home/away scoring baselines."""
+    matches: int = 0
+    home_goals: int = 0
+    away_goals: int = 0
+
+    # Sensible priors used before enough matches exist (typical top-league rates).
+    DEFAULT_HOME_AVG = 1.5
+    DEFAULT_AWAY_AVG = 1.1
+
+    def home_avg(self) -> float:
+        return self.home_goals / self.matches if self.matches > 0 else self.DEFAULT_HOME_AVG
+
+    def away_avg(self) -> float:
+        return self.away_goals / self.matches if self.matches > 0 else self.DEFAULT_AWAY_AVG
+
+    def update(self, home_goals: int, away_goals: int) -> None:
+        self.matches += 1
+        self.home_goals += home_goals
+        self.away_goals += away_goals
 
 
 @dataclass
@@ -102,17 +147,28 @@ class ScoredMatch:
         return 1 if self.home_goals > 0 and self.away_goals > 0 else 0
 
 
-def iter_scored_matches(
-    fixtures: List[Dict], min_matches: int = 4
-) -> Iterator[ScoredMatch]:
-    """
-    Replay a season chronologically, yielding one ScoredMatch per finished game
-    where both teams already have >= min_matches played (early rounds carry too
-    little signal to be worth scoring).
+# (matches, goals_for, goals_against) for a home or away split, taken pre-match.
+Split = Tuple[int, int, int]
 
-    Only status == "FT" games are considered.
+
+@dataclass
+class MatchContext:
+    """Everything a model needs to predict one match, all pre-match (no leakage)."""
+    scored: ScoredMatch          # overall snapshots + actual result
+    lg_home_avg: float           # league avg goals a HOME side scores, so far
+    lg_away_avg: float           # league avg goals an AWAY side scores, so far
+    home_home: Split             # home team's record when playing at home
+    away_away: Split             # away team's record when playing away
+
+
+def _replay(fixtures: List[Dict], min_matches: int) -> Iterator[MatchContext]:
+    """
+    Core chronological replay. Yields a MatchContext per finished match where
+    both teams already have >= min_matches played. Accumulators and league
+    state are updated only AFTER each yield.
     """
     accumulators: Dict[int, TeamAccumulator] = {}
+    league = LeagueState()
 
     def acc(team_id: int, name: str) -> TeamAccumulator:
         a = accumulators.get(team_id)
@@ -133,9 +189,8 @@ def iter_scored_matches(
         home = acc(rec["home_id"], rec["home_name"])
         away = acc(rec["away_id"], rec["away_name"])
 
-        # (1) snapshot + (2) predict-worthy?  Snapshot is taken BEFORE the update.
         if home.matches_played >= min_matches and away.matches_played >= min_matches:
-            yield ScoredMatch(
+            scored = ScoredMatch(
                 date=rec["date"],
                 home_name=home.name,
                 away_name=away.name,
@@ -144,13 +199,32 @@ def iter_scored_matches(
                 home_goals=hg,
                 away_goals=ag,
             )
+            yield MatchContext(
+                scored=scored,
+                lg_home_avg=league.home_avg(),
+                lg_away_avg=league.away_avg(),
+                home_home=(home.home_matches, home.home_goals_for, home.home_goals_against),
+                away_away=(away.away_matches, away.away_goals_for, away.away_goals_against),
+            )
 
-        # (3) only now does the actual result enter the accumulators.
-        home.update(hg, ag)
-        away.update(ag, hg)
+        # Only now does the actual result enter the accumulators + league state.
+        home.update(hg, ag, is_home=True)
+        away.update(ag, hg, is_home=False)
+        league.update(hg, ag)
 
 
-# ── prediction layer (uses the REAL model maths via the analyzers) ────────────
+def iter_match_contexts(fixtures: List[Dict], min_matches: int = 4) -> Iterator[MatchContext]:
+    """Replay a season, yielding a rich MatchContext per scored match."""
+    yield from _replay(fixtures, min_matches)
+
+
+def iter_scored_matches(fixtures: List[Dict], min_matches: int = 4) -> Iterator[ScoredMatch]:
+    """Replay a season, yielding just the ScoredMatch (overall stats + result)."""
+    for ctx in _replay(fixtures, min_matches):
+        yield ctx.scored
+
+
+# ── baseline prediction layer (the CURRENT model, via the analyzers) ──────────
 
 _goals = GoalsAnalyzer()
 _result = ResultAnalyzer()
@@ -158,10 +232,8 @@ _result = ResultAnalyzer()
 
 def predict_match(match: ScoredMatch) -> Dict[str, float]:
     """
-    Produce the model's probabilities for a match, as fractions in [0, 1].
-
-    Reuses the analyzers' pure probability methods so the backtest scores the
-    exact same maths the live app uses.
+    Baseline model probabilities (fractions in [0, 1]) using the live app's
+    analyzer maths. This is the model we already backtested.
     """
     goals_probs = _goals.match_goals_probabilities(match.home_stats, match.away_stats)
     btts_yes = _goals.btts_yes_probability(match.home_stats, match.away_stats)

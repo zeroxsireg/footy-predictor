@@ -3,7 +3,7 @@
 from rich.console import Console
 from rich.table import Table
 
-from backtest.runner import BacktestReport
+from backtest.runner import BacktestReport, ComparisonReport
 
 
 def _brier_note(brier: float) -> str:
@@ -98,3 +98,61 @@ def print_report(report: BacktestReport, console: Console | None = None) -> None
         "Skill>0 = meglio del prevedere sempre la media. "
         "Calibrazione buona = scarto vicino a 0.[/dim]\n"
     )
+
+
+def _skill_cell(skill: float, brier: float) -> str:
+    style = "green" if skill > 0 else "red"
+    return f"[{style}]{skill:+.3f}[/{style}] [dim]({brier:.3f})[/dim]"
+
+
+def print_comparison(cmp: ComparisonReport, console: Console | None = None) -> None:
+    """Head-to-head Brier Skill (higher = better) of every model, per market."""
+    console = console or Console()
+    names = list(cmp.reports)
+
+    console.print()
+    console.rule(
+        f"[bold]CONFRONTO MODELLI — Lega {cmp.league_id} · Stagione {cmp.season}[/bold]"
+    )
+    console.print(
+        f"Partite valutate: [bold]{cmp.total_matches_scored}[/bold] "
+        f"(stesse partite per tutti i modelli)\n"
+    )
+
+    table = Table(
+        title="Brier Skill per mercato  —  verde = meglio del caso, +alto = meglio  [dim](tra parentesi il Brier)[/dim]",
+        header_style="bold cyan",
+    )
+    table.add_column("Mercato")
+    for name in names:
+        table.add_column(name, justify="center")
+
+    # binary markets, row per market
+    market_names = [b.market for b in cmp.reports[names[0]].binary]
+    for idx, market in enumerate(market_names):
+        row = [market]
+        best = max(cmp.reports[n].binary[idx].brier_skill for n in names)
+        for name in names:
+            r = cmp.reports[name].binary[idx]
+            cell = _skill_cell(r.brier_skill, r.brier)
+            if r.brier_skill == best and len([n for n in names if cmp.reports[n].binary[idx].brier_skill == best]) == 1:
+                cell = "⭐ " + cell
+            row.append(cell)
+        table.add_row(*row)
+
+    # 1X2 as multiclass Brier (lower is better; no skill score)
+    row = ["Risultato 1X2 [dim](Brier↓)[/dim]"]
+    best_1x2 = min(cmp.reports[n].result_1x2.brier for n in names)
+    for name in names:
+        m = cmp.reports[name].result_1x2
+        style = "green" if m.brier == best_1x2 else "white"
+        star = "⭐ " if m.brier == best_1x2 else ""
+        row.append(f"{star}[{style}]{m.brier:.3f}[/{style}] [dim]{m.hit_rate:.0%}[/dim]")
+    table.add_row(*row)
+
+    console.print(table)
+    console.print(
+        "\n[dim]⭐ = migliore del mercato. Brier Skill: >0 batte il 'prevedi sempre la media'. "
+        "1X2: Brier più basso è meglio, % = azzeccate (argmax).[/dim]\n"
+    )
+

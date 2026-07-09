@@ -28,6 +28,7 @@ def _normalize_fixture(fd: Dict[str, Any]) -> Optional[Dict[str, Any]]:
             "fixture_id": fixture["id"],
             "date": fixture["date"],
             "status": fixture["status"]["short"],
+            "referee": fixture.get("referee"),
             "round": fd.get("league", {}).get("round", ""),
             "home_id": teams["home"]["id"],
             "home_name": teams["home"]["name"],

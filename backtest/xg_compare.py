@@ -157,3 +157,54 @@ def run_xg_comparison(
         n=scored, xg_missing=xg_missing,
         models={"Gol": scores("Gol"), "xG": scores("xG")},
     )
+
+
+def iter_xg_predictions(
+    fixtures: List[Dict], xg_map: Dict[str, Dict], *,
+    target_season: int | None = None, xi: float = 0.0, k: float = 5.0,
+    min_matches: int = 4,
+):
+    """
+    Yield the xG model's per-match predictions for scored target-season matches.
+
+    Each item: {fixture_id, date, home_name, away_name, home_goals, away_goals,
+    probs} where probs holds over_1_5/2_5/3_5, btts_yes, result_1/X/2.
+    Used by the CLV evaluation to join predictions with market odds.
+    """
+    ordered = sorted(fixtures, key=lambda r: (r["date"], r["fixture_id"]))
+    ordered = [r for r in ordered if r.get("status") == "FT"
+               and r.get("home_goals") is not None and r.get("away_goals") is not None]
+    if not ordered:
+        return
+    epoch = datetime.fromisoformat(ordered[0]["date"].replace("Z", "+00:00"))
+
+    x_teams: Dict[int, WeightedTeam] = {}
+    x_league = WeightedLeague()
+    count: Dict[int, int] = {}
+
+    def xt(tid): return x_teams.setdefault(tid, WeightedTeam())
+
+    for rec in ordered:
+        hid, aid = rec["home_id"], rec["away_id"]
+        hg, ag = rec["home_goals"], rec["away_goals"]
+        xh, xa = xt(hid), xt(aid)
+
+        in_scope = target_season is None or rec.get("season") == target_season
+        if in_scope and count.get(hid, 0) >= min_matches and count.get(aid, 0) >= min_matches:
+            probs = strength_predict(_ctx(xh, xa, x_league, hg, ag), k=k)
+            yield {
+                "fixture_id": rec["fixture_id"], "date": rec["date"],
+                "home_name": rec["home_name"], "away_name": rec["away_name"],
+                "home_goals": hg, "away_goals": ag, "probs": probs,
+            }
+
+        weight = math.exp(xi * _to_days(rec["date"], epoch))
+        xg = xg_map.get(str(rec["fixture_id"]), {})
+        home_xg, away_xg = xg.get("home_xg"), xg.get("away_xg")
+        if home_xg is None or away_xg is None:
+            home_xg, away_xg = float(hg), float(ag)
+        xh.update(weight, home_xg, away_xg)
+        xa.update(weight, away_xg, home_xg)
+        x_league.update(weight, home_xg, away_xg)
+        count[hid] = count.get(hid, 0) + 1
+        count[aid] = count.get(aid, 0) + 1

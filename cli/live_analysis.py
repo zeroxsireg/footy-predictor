@@ -24,7 +24,6 @@ class LiveMatchAnalyzer:
             39: "Premier League",     # England  
             140: "La Liga",           # Spain
             78: "Bundesliga",         # Germany
-            61: "Ligue 1",            # France
             2: "UEFA Champions League",
             3: "UEFA Europa League"
         }
@@ -90,7 +89,6 @@ class LiveMatchAnalyzer:
             "England": "🏴󠁧󠁢󠁥󠁮󠁧󠁿", 
             "Spain": "🇪🇸",
             "Germany": "🇩🇪",
-            "France": "🇫🇷",
             "Europe": "🏆"
         }
         return flags.get(country, "🌍")

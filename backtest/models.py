@@ -105,9 +105,12 @@ def _score_matrix(lam_home: float, lam_away: float, rho: float = 0.0):
 
 
 def _markets_from_matrix(matrix) -> Dict[str, float]:
-    """Derive all backtested markets from a joint score matrix."""
+    """Derive all backtested markets from a joint score matrix (incl. multigol)."""
     over_1_5 = over_2_5 = over_3_5 = btts_yes = 0.0
     p1 = pX = p2 = 0.0
+    # multigol: goals within a range (total / home / away)
+    mg_t_1_2 = mg_t_2_3 = mg_t_1_3 = mg_t_2_4 = 0.0
+    mg_h_1_2 = mg_h_1_3 = mg_a_1_2 = mg_a_1_3 = 0.0
     for i, row in enumerate(matrix):
         for j, p in enumerate(row):
             total = i + j
@@ -125,6 +128,24 @@ def _markets_from_matrix(matrix) -> Dict[str, float]:
                 pX += p
             else:
                 p2 += p
+            # multigol totale
+            if 1 <= total <= 2:
+                mg_t_1_2 += p
+            if 2 <= total <= 3:
+                mg_t_2_3 += p
+            if 1 <= total <= 3:
+                mg_t_1_3 += p
+            if 2 <= total <= 4:
+                mg_t_2_4 += p
+            # multigol casa / trasferta
+            if 1 <= i <= 2:
+                mg_h_1_2 += p
+            if 1 <= i <= 3:
+                mg_h_1_3 += p
+            if 1 <= j <= 2:
+                mg_a_1_2 += p
+            if 1 <= j <= 3:
+                mg_a_1_3 += p
     return {
         "over_1_5": over_1_5,
         "over_2_5": over_2_5,
@@ -133,6 +154,14 @@ def _markets_from_matrix(matrix) -> Dict[str, float]:
         "result_1": p1,
         "result_X": pX,
         "result_2": p2,
+        "mg_total_1_2": mg_t_1_2,
+        "mg_total_2_3": mg_t_2_3,
+        "mg_total_1_3": mg_t_1_3,
+        "mg_total_2_4": mg_t_2_4,
+        "mg_home_1_2": mg_h_1_2,
+        "mg_home_1_3": mg_h_1_3,
+        "mg_away_1_2": mg_a_1_2,
+        "mg_away_1_3": mg_a_1_3,
     }
 
 

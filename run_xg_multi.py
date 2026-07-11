@@ -20,7 +20,7 @@ from backtest.xg_data import get_xg_map
 from backtest.xg_compare import run_xg_comparison
 
 LEAGUES = [(135, "Serie A"), (140, "La Liga"), (78, "Bundesliga"),
-           (39, "Premier"), (61, "Ligue 1")]
+           (39, "Premier")]
 # target season -> history seasons (both well covered for xG)
 TARGETS = [(2024, [2023]), (2025, [2024])]
 

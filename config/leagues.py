@@ -72,16 +72,6 @@ class LeagueManager:
                 enabled=False,  # ❌ DISABILITATA
                 priority=4
             ),
-            'ligue_1': LeagueConfig(
-                key='ligue_1',
-                name='Ligue 1',
-                country='France',
-                country_code='FR',
-                flag='🇫🇷',
-                api_league_id=61,
-                enabled=False,  # ❌ DISABILITATA
-                priority=5
-            ),
             'champions_league': LeagueConfig(
                 key='champions_league',
                 name='Champions League',

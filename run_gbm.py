@@ -24,7 +24,7 @@ from backtest.features import build_feature_frame
 from backtest.gbm import train_and_evaluate
 
 LEAGUES = [(135, "Serie A"), (140, "La Liga"), (78, "Bundesliga"),
-           (39, "Premier"), (61, "Ligue 1")]
+           (39, "Premier")]
 
 
 def parse_args():

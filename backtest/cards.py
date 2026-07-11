@@ -75,6 +75,8 @@ def run_cards_backtest(
     refs: Dict[str, Counter] = {}
     league_cards_w = league_w = 0.0
     count: Dict[int, int] = {}
+    # online recalibration: running sums of raw prediction vs actual (past only)
+    recal_pred = recal_act = 0.0
 
     def tc(t): return teams.setdefault(t, Counter())
     def rc(r): return refs.setdefault(r, Counter())
@@ -98,26 +100,36 @@ def run_cards_backtest(
         ref = _ref_name(rec.get("referee"))
 
         in_scope = score_seasons is None or rec.get("season") in score_seasons
-        if in_scope and count.get(hid, 0) >= min_matches and count.get(aid, 0) >= min_matches:
+        predictable = count.get(hid, 0) >= min_matches and count.get(aid, 0) >= min_matches
+        if predictable:
             base_total = (league_cards_w / league_w) if league_w > 0 else 4.0
             team_base = base_total / 2.0
             prop_h = _clamp(_shrunk(th.x_w, th.w, team_base, k) / team_base)
             prop_a = _clamp(_shrunk(ta.x_w, ta.w, team_base, k) / team_base)
-            if ref and refs.get(ref) and refs[ref].w > 0:
+            has_ref = bool(ref and refs.get(ref) and refs[ref].w > 0)
+            if has_ref:
                 ref_rate = _shrunk(refs[ref].x_w, refs[ref].w, base_total, ref_k)
                 ref_factor = _clamp(ref_rate / base_total)
-                ref_known += 1
             else:
                 ref_factor = 1.0
-            lam = max(0.5, base_total * (prop_h + prop_a) / 2.0 * ref_factor)
+            lam_raw = max(0.5, base_total * (prop_h + prop_a) / 2.0 * ref_factor)
+            # correct any systematic bias using past matches only
+            recal = min(1.3, max(0.7, recal_act / recal_pred)) if recal_pred > 0 else 1.0
+            lam = lam_raw * recal
 
-            scored += 1
-            for ln in LINES:
-                p_over = BaseAnalyzer._poisson_over_prob(lam, ln)
-                pairs[ln].append((p_over, 1 if total > ln else 0))
-            abs_err.append(abs(lam - total))
-            exp_list.append(lam)
-            act_list.append(total)
+            if in_scope:
+                scored += 1
+                if has_ref:
+                    ref_known += 1
+                for ln in LINES:
+                    p_over = BaseAnalyzer._poisson_over_prob(lam, ln)
+                    pairs[ln].append((p_over, 1 if total > ln else 0))
+                abs_err.append(abs(lam - total))
+                exp_list.append(lam)
+                act_list.append(total)
+
+            recal_pred += lam_raw
+            recal_act += total
 
         # ── updates ──
         weight = math.exp(xi * _to_days(rec["date"], epoch))

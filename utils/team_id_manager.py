@@ -64,10 +64,6 @@ class TeamIDManager:
         """Get Bundesliga teams for specified season."""
         return await self.get_league_teams(78, season)
     
-    async def get_ligue1_teams(self, season: int = 2025) -> Dict[int, str]:
-        """Get Ligue 1 teams for specified season."""
-        return await self.get_league_teams(61, season)
-    
     async def find_team_by_name(self, team_name: str, league_id: int, season: int) -> Optional[int]:
         """Find team ID by name in a specific league."""
         teams = await self.get_league_teams(league_id, season)
@@ -106,11 +102,6 @@ class TeamIDManager:
                 "league_id": 78,
                 "country": "Germany",
                 "method": "get_bundesliga_teams"
-            },
-            "Ligue 1": {
-                "league_id": 61,
-                "country": "France",
-                "method": "get_ligue1_teams"
             }
         }
     
@@ -159,7 +150,7 @@ class TeamIDManager:
         teams = await self.get_league_teams(league_id, season)
         
         if not filename:
-            league_name = {135: "serie_a", 39: "premier_league", 140: "la_liga", 78: "bundesliga", 61: "ligue1"}.get(league_id, f"league_{league_id}")
+            league_name = {135: "serie_a", 39: "premier_league", 140: "la_liga", 78: "bundesliga"}.get(league_id, f"league_{league_id}")
             filename = f"correct_team_ids_{league_name}_{season}.json"
         
         export_data = {

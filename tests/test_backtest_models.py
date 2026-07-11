@@ -108,12 +108,12 @@ def test_expected_goals_fallback_when_no_split_history():
 
 # ── model wiring ──────────────────────────────────────────────────────────────
 
-def test_all_models_return_the_seven_keys():
+def test_all_models_return_the_core_markets():
     ctx = _ctx("home_strong")
     keys = {"over_1_5", "over_2_5", "over_3_5", "btts_yes", "result_1", "result_X", "result_2"}
     for model in (M.baseline_model, M.poisson_strength_model, M.dixon_coles_model):
         out = model(ctx)
-        assert set(out) == keys
+        assert keys <= set(out)   # core markets present (strength models add multigol)
         assert all(0.0 <= v <= 1.0 for v in out.values())
 
 

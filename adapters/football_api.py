@@ -44,7 +44,6 @@ class FootballAPIClient:
         ("England", "Premier League"): 39,
         ("Spain", "La Liga"): 140,
         ("Germany", "Bundesliga"): 78,
-        ("France", "Ligue 1"): 61,
         ("UEFA", "Champions League"): 2,
         ("UEFA", "Europa League"): 3,
     }

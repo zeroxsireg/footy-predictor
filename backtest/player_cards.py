@@ -27,10 +27,15 @@ _REF_CLAMP = (0.6, 1.6)
 class PlayerStat:
     apps: int = 0
     yellows: int = 0
+    fouls_sum: float = 0.0
+    fouls_apps: int = 0     # appearances with foul data (coverage ~50%)
 
-    def update(self, booked: int) -> None:
+    def update(self, booked: int, fouls=None) -> None:
         self.apps += 1
         self.yellows += booked
+        if fouls is not None:
+            self.fouls_sum += fouls
+            self.fouls_apps += 1
 
 
 @dataclass
@@ -64,31 +69,29 @@ def _ref_name(raw) -> str:
     return str(raw).split(",")[0].strip() if raw else ""
 
 
-def run_player_cards_backtest(
+def iter_player_predictions(
     fixtures: List[Dict], players_map: Dict[str, List[Dict]], *,
     xi: float = 0.0, k: float = 4.0, ref_k: float = 8.0, min_apps: int = 3,
     score_seasons: set | None = None,
-) -> PlayerCardsReport:
+):
+    """
+    Point-in-time generator: per in-scope match, yields the booking probability
+    for each player with enough history. Single source of truth for both the
+    backtest and the prediction card.
+    """
     ordered = sorted(fixtures, key=lambda r: (r["date"], r["fixture_id"]))
     ordered = [r for r in ordered if r.get("status") == "FT" and str(r["fixture_id"]) in players_map]
     if not ordered:
-        return PlayerCardsReport(0, 0, 0.0, score_binary("x", []), 0, 0, 0, 0, 0)
-    epoch = datetime.fromisoformat(ordered[0]["date"].replace("Z", "+00:00"))
+        return
 
     players: Dict[int, PlayerStat] = {}
     positions: Dict[str, PlayerStat] = {}
     refs: Dict[str, RefStat] = {}
     lg_yellows = lg_apps = 0
     lg_cards = lg_matches = 0
+    lg_fouls_sum = 0.0
+    lg_fouls_apps = 0
     recal_pred = recal_act = 0.0
-
-    pairs: List[tuple] = []
-    p_booked: List[float] = []
-    p_unbooked: List[float] = []
-    exp_list: List[float] = []
-    act_list: List[float] = []
-    prec_num = prec_den = 0.0
-    n_matches = 0
 
     for rec in ordered:
         roster = players_map[str(rec["fixture_id"])]
@@ -106,8 +109,9 @@ def run_player_cards_backtest(
             else:
                 ref_factor = 1.0
             recal = _clamp(recal_act / recal_pred, 0.7, 1.3) if recal_pred > 0 else 1.0
+            lg_fouls_avg = (lg_fouls_sum / lg_fouls_apps) if lg_fouls_apps else 0.0
 
-            match_rows = []
+            rows = []
             for p in played:
                 pid = p.get("player_id")
                 ps = players.get(pid)
@@ -118,40 +122,71 @@ def run_player_cards_backtest(
                 pos_base = ((pos_stat.yellows + 20 * base_rate) / (pos_stat.apps + 20)
                             if pos_stat else base_rate)
                 player_rate = (ps.yellows + k * pos_base) / (ps.apps + k)
-                prob = _clamp(player_rate * ref_factor * recal, *_P_CLAMP)
+                if ps.fouls_apps >= 3 and lg_fouls_avg > 0:
+                    fr = (ps.fouls_sum + 5 * lg_fouls_avg) / (ps.fouls_apps + 5)
+                    fouls_factor = _clamp(fr / lg_fouls_avg, 0.6, 1.6)
+                else:
+                    fouls_factor = 1.0
+                raw = player_rate * ref_factor * fouls_factor
+                prob = _clamp(raw * recal, *_P_CLAMP)
                 booked = 1 if (p.get("yellow") or 0) >= 1 else 0
-                match_rows.append((prob, booked))
-                recal_pred += player_rate * ref_factor
+                rows.append({"player_id": pid, "name": p.get("name"),
+                             "team_id": p.get("team_id"), "position": pos,
+                             "prob": prob, "booked": booked})
+                recal_pred += raw
                 recal_act += booked
-
-            if match_rows:
-                n_matches += 1
-                for prob, booked in match_rows:
-                    pairs.append((prob, booked))
-                    (p_booked if booked else p_unbooked).append(prob)
-                exp_list.append(sum(pr for pr, _ in match_rows))
-                act_list.append(sum(b for _, b in match_rows))
-                # precision@k: k = actual bookings among scored players
-                kk = sum(b for _, b in match_rows)
-                if kk > 0:
-                    top = sorted(match_rows, key=lambda x: x[0], reverse=True)[:kk]
-                    prec_num += sum(b for _, b in top)
-                    prec_den += kk
+            if rows:
+                yield {"fixture_id": rec["fixture_id"], "in_scope": True, "players": rows}
 
         # ── updates (after prediction) ──
         for p in played:
             pid = p.get("player_id")
             booked = 1 if (p.get("yellow") or 0) >= 1 else 0
             pos = p.get("position") or "?"
+            fouls = p.get("fouls")
             if pid is not None:
-                players.setdefault(pid, PlayerStat()).update(booked)
+                players.setdefault(pid, PlayerStat()).update(booked, fouls)
             positions.setdefault(pos, PlayerStat()).update(booked)
             lg_yellows += booked
             lg_apps += 1
+            if fouls is not None:
+                lg_fouls_sum += fouls
+                lg_fouls_apps += 1
         if ref:
             refs.setdefault(ref, RefStat()).update(total_cards)
         lg_cards += total_cards
         lg_matches += 1
+
+
+def run_player_cards_backtest(
+    fixtures: List[Dict], players_map: Dict[str, List[Dict]], *,
+    xi: float = 0.0, k: float = 4.0, ref_k: float = 8.0, min_apps: int = 3,
+    score_seasons: set | None = None,
+) -> PlayerCardsReport:
+    pairs: List[tuple] = []
+    p_booked: List[float] = []
+    p_unbooked: List[float] = []
+    exp_list: List[float] = []
+    act_list: List[float] = []
+    prec_num = prec_den = 0.0
+    n_matches = 0
+
+    for pred in iter_player_predictions(
+        fixtures, players_map, xi=xi, k=k, ref_k=ref_k, min_apps=min_apps,
+        score_seasons=score_seasons,
+    ):
+        rows = pred["players"]
+        n_matches += 1
+        for r in rows:
+            pairs.append((r["prob"], r["booked"]))
+            (p_booked if r["booked"] else p_unbooked).append(r["prob"])
+        exp_list.append(sum(r["prob"] for r in rows))
+        act_list.append(sum(r["booked"] for r in rows))
+        kk = sum(r["booked"] for r in rows)
+        if kk > 0:
+            top = sorted(rows, key=lambda x: x["prob"], reverse=True)[:kk]
+            prec_num += sum(r["booked"] for r in top)
+            prec_den += kk
 
     return PlayerCardsReport(
         n_pairs=len(pairs), n_matches=n_matches,

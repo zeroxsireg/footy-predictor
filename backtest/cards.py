@@ -60,33 +60,30 @@ class CardsReport:
     lines: List[BinaryMarketResult] = field(default_factory=list)
 
 
-def run_cards_backtest(
+def iter_cards_predictions(
     fixtures: List[Dict], cards_map: Dict[str, Dict], *,
     xi: float = 0.0, k: float = 6.0, ref_k: float = 8.0, min_matches: int = 4,
     score_seasons: set | None = None,
-) -> CardsReport:
+):
+    """
+    Point-in-time generator: yields the team cards prediction for each match
+    where both teams have enough history. The single source of truth used by
+    both run_cards_backtest and the prediction card.
+    """
     ordered = sorted(fixtures, key=lambda r: (r["date"], r["fixture_id"]))
     ordered = [r for r in ordered if r.get("status") == "FT"]
     if not ordered:
-        return CardsReport(0, 0.0, 0.0, 0.0, 0.0)
+        return
     epoch = datetime.fromisoformat(ordered[0]["date"].replace("Z", "+00:00"))
 
     teams: Dict[int, Counter] = {}
     refs: Dict[str, Counter] = {}
     league_cards_w = league_w = 0.0
     count: Dict[int, int] = {}
-    # online recalibration: running sums of raw prediction vs actual (past only)
     recal_pred = recal_act = 0.0
 
     def tc(t): return teams.setdefault(t, Counter())
     def rc(r): return refs.setdefault(r, Counter())
-
-    pairs = {ln: [] for ln in LINES}
-    abs_err: List[float] = []
-    exp_list: List[float] = []
-    act_list: List[float] = []
-    ref_known = 0
-    scored = 0
 
     for rec in ordered:
         fid = str(rec["fixture_id"])
@@ -113,21 +110,16 @@ def run_cards_backtest(
             else:
                 ref_factor = 1.0
             lam_raw = max(0.5, base_total * (prop_h + prop_a) / 2.0 * ref_factor)
-            # correct any systematic bias using past matches only
             recal = min(1.3, max(0.7, recal_act / recal_pred)) if recal_pred > 0 else 1.0
             lam = lam_raw * recal
 
-            if in_scope:
-                scored += 1
-                if has_ref:
-                    ref_known += 1
-                for ln in LINES:
-                    p_over = BaseAnalyzer._poisson_over_prob(lam, ln)
-                    pairs[ln].append((p_over, 1 if total > ln else 0))
-                abs_err.append(abs(lam - total))
-                exp_list.append(lam)
-                act_list.append(total)
-
+            yield {
+                "fixture_id": rec["fixture_id"],
+                "home_name": rec.get("home_name"), "away_name": rec.get("away_name"),
+                "referee": ref, "in_scope": in_scope, "has_ref": has_ref,
+                "expected": lam, "total": total,
+                "over": {ln: BaseAnalyzer._poisson_over_prob(lam, ln) for ln in LINES},
+            }
             recal_pred += lam_raw
             recal_act += total
 
@@ -141,6 +133,34 @@ def run_cards_backtest(
         league_w += weight
         count[hid] = count.get(hid, 0) + 1
         count[aid] = count.get(aid, 0) + 1
+
+
+def run_cards_backtest(
+    fixtures: List[Dict], cards_map: Dict[str, Dict], *,
+    xi: float = 0.0, k: float = 6.0, ref_k: float = 8.0, min_matches: int = 4,
+    score_seasons: set | None = None,
+) -> CardsReport:
+    pairs = {ln: [] for ln in LINES}
+    abs_err: List[float] = []
+    exp_list: List[float] = []
+    act_list: List[float] = []
+    ref_known = scored = 0
+
+    for pred in iter_cards_predictions(
+        fixtures, cards_map, xi=xi, k=k, ref_k=ref_k, min_matches=min_matches,
+        score_seasons=score_seasons,
+    ):
+        if not pred["in_scope"]:
+            continue
+        scored += 1
+        if pred["has_ref"]:
+            ref_known += 1
+        lam, total = pred["expected"], pred["total"]
+        for ln in LINES:
+            pairs[ln].append((pred["over"][ln], 1 if total > ln else 0))
+        abs_err.append(abs(lam - total))
+        exp_list.append(lam)
+        act_list.append(total)
 
     return CardsReport(
         n=scored,

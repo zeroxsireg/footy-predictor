@@ -126,6 +126,21 @@ def get_serie_a_odds(year: int, *, refresh: bool = False,
     return parse_odds(text, SERIE_A_ALIASES, source=source)
 
 
+# API-Football league id -> football-data.co.uk league code
+LEAGUE_CODES = {135: "I1", 140: "SP1", 39: "E0"}
+
+
+def get_league_odds(league_id: int, year: int, *, refresh: bool = False,
+                    source: str = "sharp") -> List[Dict]:
+    """
+    Odds for any supported league. Team names are left raw (no alias dict) —
+    the bankroll/CLV layer fuzzy-matches them to our API names.
+    """
+    code = LEAGUE_CODES[league_id]
+    text = get_csv(code, year, refresh=refresh)
+    return parse_odds(text, aliases={}, source=source)
+
+
 def index_by_teams(records: List[Dict]) -> Dict[tuple, Dict]:
     """Index odds by (home, away) — a unique ordered pairing per season."""
     return {(r["home"], r["away"]): r for r in records}

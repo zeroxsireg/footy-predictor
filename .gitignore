@@ -61,6 +61,9 @@ Thumbs.db
 # Backtest cache (fetched season data — regenerable, not source)
 backtest/data/
 
+# Generated prediction JSON (regenerable output)
+predictions/
+
 # Test / coverage artifacts
 .pytest_cache/
 .coverage

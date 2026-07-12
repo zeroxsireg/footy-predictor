@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "league": {
+    "id": 39,
+    "name": "Premier League"
+  },
+  "season": 2024,
+  "matchday": 19,
+  "generated_at": "2026-07-11T23:49:56.594897+00:00",
+  "matches": [
+    {
+      "fixture_id": 1208209,
+      "home": "Leicester",
+      "away": "Manchester City",
+      "date": "2024-12-29T14:30:00+00:00",
+      "referee": "M. Oliver",
+      "markets": {
+        "1x2": {
+          "home": 0.136,
+          "draw": 0.185,
+          "away": 0.679
+        },
+        "goals": {
+          "over_1_5": 0.822,
+          "over_2_5": 0.609,
+          "over_3_5": 0.386,
+          "btts": 0.531
+        },
+        "multigol": {
+          "1-2": 0.348,
+          "2-3": 0.436,
+          "1-3": 0.571,
+          "2-4": 0.612,
+          "home_1-3": 0.58,
+          "away_1-3": 0.704
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 2
+      }
+    },
+    {
+      "fixture_id": 1208205,
+      "home": "Crystal Palace",
+      "away": "Southampton",
+      "date": "2024-12-29T15:00:00+00:00",
+      "referee": "M. Salisbury",
+      "markets": {
+        "1x2": {
+          "home": 0.624,
+          "draw": 0.208,
+          "away": 0.168
+        },
+        "goals": {
+          "over_1_5": 0.796,
+          "over_2_5": 0.569,
+          "over_3_5": 0.345,
+          "btts": 0.53
+        },
+        "multigol": {
+          "1-2": 0.379,
+          "2-3": 0.451,
+          "1-3": 0.603,
+          "2-4": 0.617,
+          "home_1-3": 0.721,
+          "away_1-3": 0.595
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 2,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1208206,
+      "home": "Everton",
+      "away": "Nottingham Forest",
+      "date": "2024-12-29T15:00:00+00:00",
+      "referee": "T. Harrington",
+      "markets": {
+        "1x2": {
+          "home": 0.403,
+          "draw": 0.278,
+          "away": 0.319
+        },
+        "goals": {
+          "over_1_5": 0.682,
+          "over_2_5": 0.419,
+          "over_3_5": 0.213,
+          "btts": 0.477
+        },
+        "multigol": {
+          "1-2": 0.486,
+          "2-3": 0.47,
+          "1-3": 0.693,
+          "2-4": 0.592,
+          "home_1-3": 0.678,
+          "away_1-3": 0.64
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 2
+      }
+    },
+    {
+      "fixture_id": 1208207,
+      "home": "Fulham",
+      "away": "Bournemouth",
+      "date": "2024-12-29T15:00:00+00:00",
+      "referee": "R. Jones",
+      "markets": {
+        "1x2": {
+          "home": 0.378,
+          "draw": 0.248,
+          "away": 0.374
+        },
+        "goals": {
+          "over_1_5": 0.786,
+          "over_2_5": 0.555,
+          "over_3_5": 0.331,
+          "btts": 0.587
+        },
+        "multigol": {
+          "1-2": 0.39,
+          "2-3": 0.455,
+          "1-3": 0.614,
+          "2-4": 0.617,
+          "home_1-3": 0.707,
+          "away_1-3": 0.706
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 2,
+        "away_goals": 2
+      }
+    },
+    {
+      "fixture_id": 1208211,
+      "home": "Tottenham",
+      "away": "Wolves",
+      "date": "2024-12-29T15:00:00+00:00",
+      "referee": "C. Kavanagh",
+      "markets": {
+        "1x2": {
+          "home": 0.614,
+          "draw": 0.196,
+          "away": 0.19
+        },
+        "goals": {
+          "over_1_5": 0.856,
+          "over_2_5": 0.666,
+          "over_3_5": 0.448,
+          "btts": 0.62
+        },
+        "multigol": {
+          "1-2": 0.302,
+          "2-3": 0.408,
+          "1-3": 0.52,
+          "2-4": 0.595,
+          "home_1-3": 0.704,
+          "away_1-3": 0.661
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 2,
+        "away_goals": 2
+      }
+    },
+    {
+      "fixture_id": 1208212,
+      "home": "West Ham",
+      "away": "Liverpool",
+      "date": "2024-12-29T17:15:00+00:00",
+      "referee": "A. Taylor",
+      "markets": {
+        "1x2": {
+          "home": 0.184,
+          "draw": 0.188,
+          "away": 0.628
+        },
+        "goals": {
+          "over_1_5": 0.872,
+          "over_2_5": 0.692,
+          "over_3_5": 0.479,
+          "btts": 0.637
+        },
+        "multigol": {
+          "1-2": 0.28,
+          "2-3": 0.393,
+          "1-3": 0.493,
+          "2-4": 0.583,
+          "home_1-3": 0.668,
+          "away_1-3": 0.693
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 5
+      }
+    },
+    {
+      "fixture_id": 1208203,
+      "home": "Aston Villa",
+      "away": "Brighton",
+      "date": "2024-12-30T19:45:00+00:00",
+      "referee": "C. Pawson",
+      "markets": {
+        "1x2": {
+          "home": 0.492,
+          "draw": 0.231,
+          "away": 0.277
+        },
+        "goals": {
+          "over_1_5": 0.813,
+          "over_2_5": 0.595,
+          "over_3_5": 0.371,
+          "btts": 0.604
+        },
+        "multigol": {
+          "1-2": 0.359,
+          "2-3": 0.442,
+          "1-3": 0.583,
+          "2-4": 0.614,
+          "home_1-3": 0.726,
+          "away_1-3": 0.683
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 2,
+        "away_goals": 2
+      }
+    },
+    {
+      "fixture_id": 1208208,
+      "home": "Ipswich",
+      "away": "Chelsea",
+      "date": "2024-12-30T19:45:00+00:00",
+      "referee": "J. Brooks",
+      "markets": {
+        "1x2": {
+          "home": 0.187,
+          "draw": 0.197,
+          "away": 0.616
+        },
+        "goals": {
+          "over_1_5": 0.849,
+          "over_2_5": 0.653,
+          "over_3_5": 0.433,
+          "btts": 0.608
+        },
+        "multigol": {
+          "1-2": 0.312,
+          "2-3": 0.415,
+          "1-3": 0.532,
+          "2-4": 0.6,
+          "home_1-3": 0.653,
+          "away_1-3": 0.707
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 2,
+        "away_goals": 0
+      }
+    },
+    {
+      "fixture_id": 1208210,
+      "home": "Manchester United",
+      "away": "Newcastle",
+      "date": "2024-12-30T20:00:00+00:00",
+      "referee": "S. Hooper",
+      "markets": {
+        "1x2": {
+          "home": 0.339,
+          "draw": 0.223,
+          "away": 0.439
+        },
+        "goals": {
+          "over_1_5": 0.859,
+          "over_2_5": 0.67,
+          "over_3_5": 0.453,
+          "btts": 0.673
+        },
+        "multigol": {
+          "1-2": 0.298,
+          "2-3": 0.406,
+          "1-3": 0.515,
+          "2-4": 0.593,
+          "home_1-3": 0.72,
+          "away_1-3": 0.726
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 2
+      }
+    },
+    {
+      "fixture_id": 1208204,
+      "home": "Brentford",
+      "away": "Arsenal",
+      "date": "2025-01-01T17:30:00+00:00",
+      "referee": "P. Bankes",
+      "markets": {
+        "1x2": {
+          "home": 0.209,
+          "draw": 0.238,
+          "away": 0.552
+        },
+        "goals": {
+          "over_1_5": 0.747,
+          "over_2_5": 0.501,
+          "over_3_5": 0.281,
+          "btts": 0.506
+        },
+        "multigol": {
+          "1-2": 0.431,
+          "2-3": 0.466,
+          "1-3": 0.65,
+          "2-4": 0.613,
+          "home_1-3": 0.6,
+          "away_1-3": 0.725
+        },
+        "cards": null,
+        "players_at_risk": null
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 3
+      }
+    }
+  ]
+}

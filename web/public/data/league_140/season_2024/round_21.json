@@ -1,0 +1,772 @@
+{
+  "schema_version": 1,
+  "league": {
+    "id": 140,
+    "name": "La Liga"
+  },
+  "season": 2024,
+  "matchday": 21,
+  "generated_at": "2026-07-11T23:49:58.019478+00:00",
+  "matches": [
+    {
+      "fixture_id": 1208677,
+      "home": "Las Palmas",
+      "away": "Osasuna",
+      "date": "2025-01-24T20:00:00+00:00",
+      "referee": "Gil Manzano",
+      "markets": {
+        "1x2": {
+          "home": 0.344,
+          "draw": 0.29,
+          "away": 0.367
+        },
+        "goals": {
+          "over_1_5": 0.651,
+          "over_2_5": 0.383,
+          "over_3_5": 0.185,
+          "btts": 0.45
+        },
+        "multigol": {
+          "1-2": 0.508,
+          "2-3": 0.466,
+          "1-3": 0.707,
+          "2-4": 0.576,
+          "home_1-3": 0.638,
+          "away_1-3": 0.65
+        },
+        "cards": {
+          "expected": 5.72,
+          "over_3_5": 0.822,
+          "over_4_5": 0.675,
+          "over_5_5": 0.508
+        },
+        "players_at_risk": [
+          {
+            "name": "Dário Essugo",
+            "team": "home",
+            "position": "M",
+            "prob": 0.577
+          },
+          {
+            "name": "Fábio Silva",
+            "team": "home",
+            "position": "F",
+            "prob": 0.438
+          },
+          {
+            "name": "Alejandro Catena",
+            "team": "away",
+            "position": "D",
+            "prob": 0.437
+          },
+          {
+            "name": "Jaime Mata",
+            "team": "home",
+            "position": "F",
+            "prob": 0.417
+          },
+          {
+            "name": "Alex Suárez",
+            "team": "home",
+            "position": "D",
+            "prob": 0.371
+          },
+          {
+            "name": "Jorge Herrando",
+            "team": "away",
+            "position": "D",
+            "prob": 0.277
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1208679,
+      "home": "Mallorca",
+      "away": "Real Betis",
+      "date": "2025-01-25T13:00:00+00:00",
+      "referee": "Javier Alberola",
+      "markets": {
+        "1x2": {
+          "home": 0.42,
+          "draw": 0.285,
+          "away": 0.294
+        },
+        "goals": {
+          "over_1_5": 0.654,
+          "over_2_5": 0.387,
+          "over_3_5": 0.188,
+          "btts": 0.448
+        },
+        "multigol": {
+          "1-2": 0.506,
+          "2-3": 0.466,
+          "1-3": 0.705,
+          "2-4": 0.578,
+          "home_1-3": 0.674,
+          "away_1-3": 0.611
+        },
+        "cards": {
+          "expected": 3.69,
+          "over_3_5": 0.503,
+          "over_4_5": 0.31,
+          "over_5_5": 0.168
+        },
+        "players_at_risk": [
+          {
+            "name": "José Copete",
+            "team": "home",
+            "position": "D",
+            "prob": 0.329
+          },
+          {
+            "name": "Samú Costa",
+            "team": "home",
+            "position": "M",
+            "prob": 0.268
+          },
+          {
+            "name": "Isco",
+            "team": "away",
+            "position": "M",
+            "prob": 0.234
+          },
+          {
+            "name": "Marc Roca",
+            "team": "away",
+            "position": "M",
+            "prob": 0.22
+          },
+          {
+            "name": "Dani Rodríguez",
+            "team": "home",
+            "position": "M",
+            "prob": 0.184
+          },
+          {
+            "name": "Cyle Larin",
+            "team": "home",
+            "position": "F",
+            "prob": 0.184
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1208675,
+      "home": "Atletico Madrid",
+      "away": "Villarreal",
+      "date": "2025-01-25T15:15:00+00:00",
+      "referee": "José Sánchez",
+      "markets": {
+        "1x2": {
+          "home": 0.609,
+          "draw": 0.209,
+          "away": 0.182
+        },
+        "goals": {
+          "over_1_5": 0.809,
+          "over_2_5": 0.589,
+          "over_3_5": 0.365,
+          "btts": 0.556
+        },
+        "multigol": {
+          "1-2": 0.364,
+          "2-3": 0.444,
+          "1-3": 0.588,
+          "2-4": 0.615,
+          "home_1-3": 0.72,
+          "away_1-3": 0.619
+        },
+        "cards": {
+          "expected": 5.4,
+          "over_3_5": 0.786,
+          "over_4_5": 0.626,
+          "over_5_5": 0.453
+        },
+        "players_at_risk": [
+          {
+            "name": "Yéremy Pino",
+            "team": "away",
+            "position": "M",
+            "prob": 0.535
+          },
+          {
+            "name": "Robin Le Normand",
+            "team": "home",
+            "position": "D",
+            "prob": 0.452
+          },
+          {
+            "name": "Alejandro Baena",
+            "team": "away",
+            "position": "M",
+            "prob": 0.443
+          },
+          {
+            "name": "Sergi Cardona",
+            "team": "away",
+            "position": "D",
+            "prob": 0.349
+          },
+          {
+            "name": "Kiko Femenía",
+            "team": "away",
+            "position": "D",
+            "prob": 0.332
+          },
+          {
+            "name": "Santi Comesaña",
+            "team": "away",
+            "position": "M",
+            "prob": 0.311
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1212930,
+      "home": "Sevilla",
+      "away": "Espanyol",
+      "date": "2025-01-25T17:30:00+00:00",
+      "referee": "Adrián Cordero",
+      "markets": {
+        "1x2": {
+          "home": 0.545,
+          "draw": 0.248,
+          "away": 0.207
+        },
+        "goals": {
+          "over_1_5": 0.715,
+          "over_2_5": 0.459,
+          "over_3_5": 0.245,
+          "btts": 0.473
+        },
+        "multigol": {
+          "1-2": 0.46,
+          "2-3": 0.47,
+          "1-3": 0.674,
+          "2-4": 0.605,
+          "home_1-3": 0.72,
+          "away_1-3": 0.577
+        },
+        "cards": {
+          "expected": 5.34,
+          "over_3_5": 0.78,
+          "over_4_5": 0.617,
+          "over_5_5": 0.444
+        },
+        "players_at_risk": [
+          {
+            "name": "Pol Lozano",
+            "team": "away",
+            "position": "M",
+            "prob": 0.534
+          },
+          {
+            "name": "Omar El Hilali",
+            "team": "away",
+            "position": "D",
+            "prob": 0.403
+          },
+          {
+            "name": "Saúl Ñíguez",
+            "team": "home",
+            "position": "M",
+            "prob": 0.31
+          },
+          {
+            "name": "Marash Kumbulla",
+            "team": "away",
+            "position": "D",
+            "prob": 0.297
+          },
+          {
+            "name": "José Ángel Carmona",
+            "team": "home",
+            "position": "D",
+            "prob": 0.289
+          },
+          {
+            "name": "Lucien Agoumé",
+            "team": "home",
+            "position": "M",
+            "prob": 0.284
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1208682,
+      "home": "Valladolid",
+      "away": "Real Madrid",
+      "date": "2025-01-25T20:00:00+00:00",
+      "referee": "Mateo Busquets",
+      "markets": {
+        "1x2": {
+          "home": 0.152,
+          "draw": 0.208,
+          "away": 0.639
+        },
+        "goals": {
+          "over_1_5": 0.775,
+          "over_2_5": 0.539,
+          "over_3_5": 0.316,
+          "btts": 0.494
+        },
+        "multigol": {
+          "1-2": 0.402,
+          "2-3": 0.459,
+          "1-3": 0.625,
+          "2-4": 0.617,
+          "home_1-3": 0.561,
+          "away_1-3": 0.722
+        },
+        "cards": {
+          "expected": 4.96,
+          "over_3_5": 0.729,
+          "over_4_5": 0.552,
+          "over_5_5": 0.377
+        },
+        "players_at_risk": [
+          {
+            "name": "Kike Pérez",
+            "team": "home",
+            "position": "M",
+            "prob": 0.503
+          },
+          {
+            "name": "Anuar",
+            "team": "home",
+            "position": "M",
+            "prob": 0.409
+          },
+          {
+            "name": "Juanmi Latasa",
+            "team": "home",
+            "position": "F",
+            "prob": 0.39
+          },
+          {
+            "name": "David Torres",
+            "team": "home",
+            "position": "D",
+            "prob": 0.354
+          },
+          {
+            "name": "Lucas Rosa",
+            "team": "home",
+            "position": "D",
+            "prob": 0.336
+          },
+          {
+            "name": "Marcos André",
+            "team": "home",
+            "position": "F",
+            "prob": 0.324
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 3
+      }
+    },
+    {
+      "fixture_id": 1208681,
+      "home": "Rayo Vallecano",
+      "away": "Girona",
+      "date": "2025-01-26T13:00:00+00:00",
+      "referee": "Isidro Díaz de Mera",
+      "markets": {
+        "1x2": {
+          "home": 0.363,
+          "draw": 0.264,
+          "away": 0.373
+        },
+        "goals": {
+          "over_1_5": 0.731,
+          "over_2_5": 0.48,
+          "over_3_5": 0.263,
+          "btts": 0.528
+        },
+        "multigol": {
+          "1-2": 0.445,
+          "2-3": 0.469,
+          "1-3": 0.663,
+          "2-4": 0.61,
+          "home_1-3": 0.682,
+          "away_1-3": 0.686
+        },
+        "cards": {
+          "expected": 4.8,
+          "over_3_5": 0.706,
+          "over_4_5": 0.524,
+          "over_5_5": 0.349
+        },
+        "players_at_risk": [
+          {
+            "name": "Yangel Herrera",
+            "team": "away",
+            "position": "M",
+            "prob": 0.544
+          },
+          {
+            "name": "Unai López",
+            "team": "home",
+            "position": "M",
+            "prob": 0.32
+          },
+          {
+            "name": "Ismaila Ciss",
+            "team": "home",
+            "position": "M",
+            "prob": 0.32
+          },
+          {
+            "name": "Abdul Mumin",
+            "team": "home",
+            "position": "D",
+            "prob": 0.272
+          },
+          {
+            "name": "Óscar Valentín",
+            "team": "home",
+            "position": "M",
+            "prob": 0.246
+          },
+          {
+            "name": "Isi Palazón",
+            "team": "home",
+            "position": "M",
+            "prob": 0.241
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 2,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1208680,
+      "home": "Real Sociedad",
+      "away": "Getafe",
+      "date": "2025-01-26T15:15:00+00:00",
+      "referee": "Guillermo Cuadra",
+      "markets": {
+        "1x2": {
+          "home": 0.502,
+          "draw": 0.275,
+          "away": 0.223
+        },
+        "goals": {
+          "over_1_5": 0.648,
+          "over_2_5": 0.38,
+          "over_3_5": 0.183,
+          "btts": 0.421
+        },
+        "multigol": {
+          "1-2": 0.51,
+          "2-3": 0.465,
+          "1-3": 0.708,
+          "2-4": 0.575,
+          "home_1-3": 0.698,
+          "away_1-3": 0.552
+        },
+        "cards": {
+          "expected": 5.95,
+          "over_3_5": 0.845,
+          "over_4_5": 0.709,
+          "over_5_5": 0.547
+        },
+        "players_at_risk": [
+          {
+            "name": "Bertuğ Yıldırım",
+            "team": "away",
+            "position": "F",
+            "prob": 0.512
+          },
+          {
+            "name": "Djené",
+            "team": "away",
+            "position": "M",
+            "prob": 0.448
+          },
+          {
+            "name": "Jon Pacheco",
+            "team": "home",
+            "position": "D",
+            "prob": 0.406
+          },
+          {
+            "name": "Igor Zubeldia",
+            "team": "home",
+            "position": "D",
+            "prob": 0.394
+          },
+          {
+            "name": "Juan Berrocal",
+            "team": "away",
+            "position": "D",
+            "prob": 0.33
+          },
+          {
+            "name": "Brais Méndez",
+            "team": "home",
+            "position": "M",
+            "prob": 0.322
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 3
+      }
+    },
+    {
+      "fixture_id": 1208674,
+      "home": "Athletic Club",
+      "away": "Leganes",
+      "date": "2025-01-26T17:30:00+00:00",
+      "referee": "Alejandro Hernández",
+      "markets": {
+        "1x2": {
+          "home": 0.684,
+          "draw": 0.206,
+          "away": 0.11
+        },
+        "goals": {
+          "over_1_5": 0.717,
+          "over_2_5": 0.461,
+          "over_3_5": 0.247,
+          "btts": 0.389
+        },
+        "multigol": {
+          "1-2": 0.458,
+          "2-3": 0.47,
+          "1-3": 0.673,
+          "2-4": 0.605,
+          "home_1-3": 0.725,
+          "away_1-3": 0.454
+        },
+        "cards": {
+          "expected": 4.56,
+          "over_3_5": 0.667,
+          "over_4_5": 0.478,
+          "over_5_5": 0.307
+        },
+        "players_at_risk": [
+          {
+            "name": "Yvan Neyou",
+            "team": "away",
+            "position": "M",
+            "prob": 0.478
+          },
+          {
+            "name": "Valentin Rosier",
+            "team": "away",
+            "position": "D",
+            "prob": 0.343
+          },
+          {
+            "name": "Óscar Rodríguez",
+            "team": "away",
+            "position": "M",
+            "prob": 0.332
+          },
+          {
+            "name": "Adrià Altimira",
+            "team": "away",
+            "position": "D",
+            "prob": 0.268
+          },
+          {
+            "name": "Matija Nastasić",
+            "team": "away",
+            "position": "D",
+            "prob": 0.265
+          },
+          {
+            "name": "Seydouba Cisse",
+            "team": "away",
+            "position": "M",
+            "prob": 0.221
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 0
+      }
+    },
+    {
+      "fixture_id": 1208676,
+      "home": "Barcelona",
+      "away": "Valencia",
+      "date": "2025-01-26T20:00:00+00:00",
+      "referee": "César Soto",
+      "markets": {
+        "1x2": {
+          "home": 0.716,
+          "draw": 0.169,
+          "away": 0.115
+        },
+        "goals": {
+          "over_1_5": 0.835,
+          "over_2_5": 0.63,
+          "over_3_5": 0.408,
+          "btts": 0.521
+        },
+        "multigol": {
+          "1-2": 0.331,
+          "2-3": 0.427,
+          "1-3": 0.553,
+          "2-4": 0.607,
+          "home_1-3": 0.688,
+          "away_1-3": 0.562
+        },
+        "cards": {
+          "expected": 3.97,
+          "over_3_5": 0.562,
+          "over_4_5": 0.366,
+          "over_5_5": 0.211
+        },
+        "players_at_risk": [
+          {
+            "name": "Mouctar Diakhaby",
+            "team": "away",
+            "position": "D",
+            "prob": 0.313
+          },
+          {
+            "name": "Frenkie de Jong",
+            "team": "home",
+            "position": "M",
+            "prob": 0.251
+          },
+          {
+            "name": "César Tárrega",
+            "team": "away",
+            "position": "D",
+            "prob": 0.205
+          },
+          {
+            "name": "Pau Cubarsí",
+            "team": "home",
+            "position": "D",
+            "prob": 0.197
+          },
+          {
+            "name": "Pepelu",
+            "team": "away",
+            "position": "M",
+            "prob": 0.187
+          },
+          {
+            "name": "Marc Casadó",
+            "team": "home",
+            "position": "M",
+            "prob": 0.182
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 7,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1208678,
+      "home": "Alaves",
+      "away": "Celta Vigo",
+      "date": "2025-01-27T20:00:00+00:00",
+      "referee": "Francisco Hernández",
+      "markets": {
+        "1x2": {
+          "home": 0.437,
+          "draw": 0.266,
+          "away": 0.297
+        },
+        "goals": {
+          "over_1_5": 0.713,
+          "over_2_5": 0.457,
+          "over_3_5": 0.243,
+          "btts": 0.503
+        },
+        "multigol": {
+          "1-2": 0.461,
+          "2-3": 0.47,
+          "1-3": 0.675,
+          "2-4": 0.604,
+          "home_1-3": 0.7,
+          "away_1-3": 0.642
+        },
+        "cards": {
+          "expected": 4.2,
+          "over_3_5": 0.605,
+          "over_4_5": 0.411,
+          "over_5_5": 0.247
+        },
+        "players_at_risk": [
+          {
+            "name": "Abdelkabir Abqar",
+            "team": "home",
+            "position": "D",
+            "prob": 0.463
+          },
+          {
+            "name": "Tomás Conechny",
+            "team": "home",
+            "position": "M",
+            "prob": 0.382
+          },
+          {
+            "name": "Ilaix Moriba",
+            "team": "away",
+            "position": "M",
+            "prob": 0.297
+          },
+          {
+            "name": "Javi Rodríguez",
+            "team": "away",
+            "position": "D",
+            "prob": 0.254
+          },
+          {
+            "name": "Nahuel Tenaglia",
+            "team": "home",
+            "position": "D",
+            "prob": 0.249
+          },
+          {
+            "name": "Manuel Sánchez",
+            "team": "home",
+            "position": "D",
+            "prob": 0.207
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 1
+      }
+    }
+  ]
+}

@@ -42,8 +42,15 @@ def card_to_json(card: Dict) -> Dict:
             "over_5_5": _r(cc["over"][5.5]),
         }
     if card.get("players"):
+        home_id = card.get("home_id")
+        away_id = card.get("away_id")
         markets["players_at_risk"] = [
-            {"name": p["name"], "position": p["position"], "prob": _r(p["prob"])}
+            {
+                "name": p["name"],
+                "team": "home" if p.get("team_id") is not None and p.get("team_id") == home_id else "away" if p.get("team_id") is not None and p.get("team_id") == away_id else None,
+                "position": p["position"],
+                "prob": _r(p["prob"])
+            }
             for p in card["players"]
         ]
 

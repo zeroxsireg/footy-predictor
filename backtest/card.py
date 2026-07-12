@@ -46,6 +46,8 @@ def build_prediction_card(
         "fixture_id": target_fixture_id,
         "home": target.get("home_name"),
         "away": target.get("away_name"),
+        "home_id": target.get("home_id"),
+        "away_id": target.get("away_id"),
         "date": target.get("date"),
         "referee": target.get("referee"),
         "actual": {"home_goals": target.get("home_goals"), "away_goals": target.get("away_goals")},
@@ -237,6 +239,7 @@ def predict_round(
         out.append({
             "league_id": league_id, "fixture_id": fid,
             "home": f.get("home_name"), "away": f.get("away_name"),
+            "home_id": f.get("home_id"), "away_id": f.get("away_id"),
             "date": f.get("date"), "referee": f.get("referee"),
             "goals": goals[fid], "cards": cards.get(fid), "players": players.get(fid),
             "actual": {"home_goals": f.get("home_goals"), "away_goals": f.get("away_goals")},

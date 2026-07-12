@@ -28,7 +28,7 @@ def test_card_to_json_structure():
     assert m["goals"]["over_2_5"] == 0.55 and m["goals"]["btts"] == 0.58
     assert set(m["multigol"]) == {"1-2", "2-3", "1-3", "2-4", "home_1-3", "away_1-3"}
     assert m["cards"]["expected"] == 4.2 and m["cards"]["over_4_5"] == 0.4
-    assert m["players_at_risk"][0] == {"name": "Bastoni", "position": "D", "prob": 0.28}
+    assert m["players_at_risk"][0] == {"name": "Bastoni", "position": "D", "prob": 0.28, "team": None}
     assert j["result"] == {"home_goals": 1, "away_goals": 2}
 
 

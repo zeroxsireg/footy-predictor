@@ -1,0 +1,772 @@
+{
+  "schema_version": 1,
+  "league": {
+    "id": 135,
+    "name": "Serie A"
+  },
+  "season": 2024,
+  "matchday": 20,
+  "generated_at": "2026-07-11T23:49:57.164771+00:00",
+  "matches": [
+    {
+      "fixture_id": 1223788,
+      "home": "Lazio",
+      "away": "Como",
+      "date": "2025-01-10T19:45:00+00:00",
+      "referee": "P. Tremolada",
+      "markets": {
+        "1x2": {
+          "home": 0.464,
+          "draw": 0.275,
+          "away": 0.26
+        },
+        "goals": {
+          "over_1_5": 0.671,
+          "over_2_5": 0.406,
+          "over_3_5": 0.203,
+          "btts": 0.455
+        },
+        "multigol": {
+          "1-2": 0.494,
+          "2-3": 0.469,
+          "1-3": 0.698,
+          "2-4": 0.586,
+          "home_1-3": 0.694,
+          "away_1-3": 0.596
+        },
+        "cards": {
+          "expected": 4.74,
+          "over_3_5": 0.697,
+          "over_4_5": 0.513,
+          "over_5_5": 0.339
+        },
+        "players_at_risk": [
+          {
+            "name": "Nicolò Rovella",
+            "team": "home",
+            "position": "M",
+            "prob": 0.427
+          },
+          {
+            "name": "Ignace Van der Brempt",
+            "team": "away",
+            "position": "D",
+            "prob": 0.317
+          },
+          {
+            "name": "Alessio Romagnoli",
+            "team": "home",
+            "position": "D",
+            "prob": 0.235
+          },
+          {
+            "name": "Alberto Moreno",
+            "team": "away",
+            "position": "D",
+            "prob": 0.234
+          },
+          {
+            "name": "Luca Pellegrini",
+            "team": "home",
+            "position": "D",
+            "prob": 0.229
+          },
+          {
+            "name": "Ben Lhassine Kone",
+            "team": "away",
+            "position": "M",
+            "prob": 0.22
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1223786,
+      "home": "Empoli",
+      "away": "Lecce",
+      "date": "2025-01-11T14:00:00+00:00",
+      "referee": "D. Chiffi",
+      "markets": {
+        "1x2": {
+          "home": 0.382,
+          "draw": 0.283,
+          "away": 0.335
+        },
+        "goals": {
+          "over_1_5": 0.67,
+          "over_2_5": 0.405,
+          "over_3_5": 0.202,
+          "btts": 0.467
+        },
+        "multigol": {
+          "1-2": 0.495,
+          "2-3": 0.469,
+          "1-3": 0.699,
+          "2-4": 0.586,
+          "home_1-3": 0.665,
+          "away_1-3": 0.643
+        },
+        "cards": {
+          "expected": 4.13,
+          "over_3_5": 0.592,
+          "over_4_5": 0.397,
+          "over_5_5": 0.236
+        },
+        "players_at_risk": [
+          {
+            "name": "Liam Henderson",
+            "team": "home",
+            "position": "M",
+            "prob": 0.314
+          },
+          {
+            "name": "Youssef Maleh",
+            "team": "home",
+            "position": "M",
+            "prob": 0.301
+          },
+          {
+            "name": "Ylber Ramadani",
+            "team": "away",
+            "position": "M",
+            "prob": 0.252
+          },
+          {
+            "name": "Giuseppe Pezzella",
+            "team": "home",
+            "position": "M",
+            "prob": 0.215
+          },
+          {
+            "name": "Emmanuel Gyasi",
+            "team": "home",
+            "position": "M",
+            "prob": 0.205
+          },
+          {
+            "name": "Liberato Cacace",
+            "team": "home",
+            "position": "F",
+            "prob": 0.202
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 3
+      }
+    },
+    {
+      "fixture_id": 1223793,
+      "home": "Udinese",
+      "away": "Atalanta",
+      "date": "2025-01-11T14:00:00+00:00",
+      "referee": "M. Mariani",
+      "markets": {
+        "1x2": {
+          "home": 0.233,
+          "draw": 0.255,
+          "away": 0.512
+        },
+        "goals": {
+          "over_1_5": 0.716,
+          "over_2_5": 0.46,
+          "over_3_5": 0.246,
+          "btts": 0.487
+        },
+        "multigol": {
+          "1-2": 0.459,
+          "2-3": 0.47,
+          "1-3": 0.673,
+          "2-4": 0.605,
+          "home_1-3": 0.601,
+          "away_1-3": 0.716
+        },
+        "cards": {
+          "expected": 4.05,
+          "over_3_5": 0.577,
+          "over_4_5": 0.381,
+          "over_5_5": 0.223
+        },
+        "players_at_risk": [
+          {
+            "name": "Marten de Roon",
+            "team": "away",
+            "position": "M",
+            "prob": 0.322
+          },
+          {
+            "name": "Nicolò Zaniolo",
+            "team": "away",
+            "position": "F",
+            "prob": 0.239
+          },
+          {
+            "name": "Martín Payero",
+            "team": "home",
+            "position": "M",
+            "prob": 0.237
+          },
+          {
+            "name": "Jaka Bijol",
+            "team": "home",
+            "position": "D",
+            "prob": 0.192
+          },
+          {
+            "name": "Kingsley Ehizibue",
+            "team": "home",
+            "position": "M",
+            "prob": 0.19
+          },
+          {
+            "name": "Isak Hien",
+            "team": "away",
+            "position": "D",
+            "prob": 0.188
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 0
+      }
+    },
+    {
+      "fixture_id": 1223792,
+      "home": "Torino",
+      "away": "Juventus",
+      "date": "2025-01-11T17:00:00+00:00",
+      "referee": "M. Fabbri",
+      "markets": {
+        "1x2": {
+          "home": 0.233,
+          "draw": 0.309,
+          "away": 0.459
+        },
+        "goals": {
+          "over_1_5": 0.564,
+          "over_2_5": 0.294,
+          "over_3_5": 0.124,
+          "btts": 0.357
+        },
+        "multigol": {
+          "1-2": 0.555,
+          "2-3": 0.44,
+          "1-3": 0.725,
+          "2-4": 0.521,
+          "home_1-3": 0.513,
+          "away_1-3": 0.656
+        },
+        "cards": {
+          "expected": 3.74,
+          "over_3_5": 0.514,
+          "over_4_5": 0.321,
+          "over_5_5": 0.176
+        },
+        "players_at_risk": [
+          {
+            "name": "Karol Linetty",
+            "team": "home",
+            "position": "M",
+            "prob": 0.365
+          },
+          {
+            "name": "Saul Coco",
+            "team": "home",
+            "position": "D",
+            "prob": 0.257
+          },
+          {
+            "name": "Andrea Cambiaso",
+            "team": "away",
+            "position": "D",
+            "prob": 0.207
+          },
+          {
+            "name": "Samuele Ricci",
+            "team": "home",
+            "position": "M",
+            "prob": 0.202
+          },
+          {
+            "name": "Sebastian Walukiewicz",
+            "team": "home",
+            "position": "D",
+            "prob": 0.201
+          },
+          {
+            "name": "Federico Gatti",
+            "team": "away",
+            "position": "D",
+            "prob": 0.164
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1223789,
+      "home": "AC Milan",
+      "away": "Cagliari",
+      "date": "2025-01-11T19:45:00+00:00",
+      "referee": "F. Fourneau",
+      "markets": {
+        "1x2": {
+          "home": 0.642,
+          "draw": 0.194,
+          "away": 0.164
+        },
+        "goals": {
+          "over_1_5": 0.833,
+          "over_2_5": 0.626,
+          "over_3_5": 0.404,
+          "btts": 0.57
+        },
+        "multigol": {
+          "1-2": 0.334,
+          "2-3": 0.428,
+          "1-3": 0.556,
+          "2-4": 0.608,
+          "home_1-3": 0.708,
+          "away_1-3": 0.62
+        },
+        "cards": {
+          "expected": 3.79,
+          "over_3_5": 0.524,
+          "over_4_5": 0.33,
+          "over_5_5": 0.183
+        },
+        "players_at_risk": [
+          {
+            "name": "Álvaro Morata",
+            "team": "home",
+            "position": "F",
+            "prob": 0.286
+          },
+          {
+            "name": "Theo Hernández",
+            "team": "home",
+            "position": "D",
+            "prob": 0.233
+          },
+          {
+            "name": "Youssouf Fofana",
+            "team": "home",
+            "position": "M",
+            "prob": 0.212
+          },
+          {
+            "name": "Fikayo Tomori",
+            "team": "home",
+            "position": "D",
+            "prob": 0.199
+          },
+          {
+            "name": "Mateusz Wieteska",
+            "team": "away",
+            "position": "D",
+            "prob": 0.197
+          },
+          {
+            "name": "Alessandro Deiola",
+            "team": "away",
+            "position": "M",
+            "prob": 0.19
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1223787,
+      "home": "Genoa",
+      "away": "Parma",
+      "date": "2025-01-12T11:30:00+00:00",
+      "referee": "A. Colombo",
+      "markets": {
+        "1x2": {
+          "home": 0.476,
+          "draw": 0.252,
+          "away": 0.272
+        },
+        "goals": {
+          "over_1_5": 0.747,
+          "over_2_5": 0.501,
+          "over_3_5": 0.281,
+          "btts": 0.532
+        },
+        "multigol": {
+          "1-2": 0.43,
+          "2-3": 0.466,
+          "1-3": 0.65,
+          "2-4": 0.614,
+          "home_1-3": 0.717,
+          "away_1-3": 0.646
+        },
+        "cards": {
+          "expected": 4.41,
+          "over_3_5": 0.643,
+          "over_4_5": 0.451,
+          "over_5_5": 0.282
+        },
+        "players_at_risk": [
+          {
+            "name": "Koni De Winter",
+            "team": "home",
+            "position": "D",
+            "prob": 0.345
+          },
+          {
+            "name": "Mandela Keita",
+            "team": "away",
+            "position": "M",
+            "prob": 0.289
+          },
+          {
+            "name": "Mattia Bani",
+            "team": "home",
+            "position": "D",
+            "prob": 0.251
+          },
+          {
+            "name": "Lautaro Valenti",
+            "team": "away",
+            "position": "D",
+            "prob": 0.227
+          },
+          {
+            "name": "Johan Vásquez",
+            "team": "home",
+            "position": "D",
+            "prob": 0.211
+          },
+          {
+            "name": "Hernani",
+            "team": "away",
+            "position": "M",
+            "prob": 0.206
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 1,
+        "away_goals": 0
+      }
+    },
+    {
+      "fixture_id": 1223794,
+      "home": "Venezia",
+      "away": "Inter",
+      "date": "2025-01-12T14:00:00+00:00",
+      "referee": "M. Piccinini",
+      "markets": {
+        "1x2": {
+          "home": 0.124,
+          "draw": 0.184,
+          "away": 0.692
+        },
+        "goals": {
+          "over_1_5": 0.805,
+          "over_2_5": 0.583,
+          "over_3_5": 0.359,
+          "btts": 0.496
+        },
+        "multigol": {
+          "1-2": 0.369,
+          "2-3": 0.446,
+          "1-3": 0.593,
+          "2-4": 0.616,
+          "home_1-3": 0.548,
+          "away_1-3": 0.708
+        },
+        "cards": {
+          "expected": 3.0,
+          "over_3_5": 0.352,
+          "over_4_5": 0.184,
+          "over_5_5": 0.084
+        },
+        "players_at_risk": [
+          {
+            "name": "Benjamin Pavard",
+            "team": "away",
+            "position": "D",
+            "prob": 0.261
+          },
+          {
+            "name": "Francesco Zampano",
+            "team": "home",
+            "position": "M",
+            "prob": 0.218
+          },
+          {
+            "name": "Jay Idzes",
+            "team": "home",
+            "position": "D",
+            "prob": 0.202
+          },
+          {
+            "name": "Hans Nicolussi Caviglia",
+            "team": "home",
+            "position": "M",
+            "prob": 0.161
+          },
+          {
+            "name": "John Yeboah",
+            "team": "home",
+            "position": "M",
+            "prob": 0.158
+          },
+          {
+            "name": "Marin Šverko",
+            "team": "home",
+            "position": "D",
+            "prob": 0.157
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 0,
+        "away_goals": 1
+      }
+    },
+    {
+      "fixture_id": 1223785,
+      "home": "Bologna",
+      "away": "AS Roma",
+      "date": "2025-01-12T17:00:00+00:00",
+      "referee": "R. Abisso",
+      "markets": {
+        "1x2": {
+          "home": 0.44,
+          "draw": 0.277,
+          "away": 0.283
+        },
+        "goals": {
+          "over_1_5": 0.677,
+          "over_2_5": 0.413,
+          "over_3_5": 0.208,
+          "btts": 0.466
+        },
+        "multigol": {
+          "1-2": 0.49,
+          "2-3": 0.469,
+          "1-3": 0.695,
+          "2-4": 0.589,
+          "home_1-3": 0.689,
+          "away_1-3": 0.615
+        },
+        "cards": {
+          "expected": 4.43,
+          "over_3_5": 0.645,
+          "over_4_5": 0.454,
+          "over_5_5": 0.285
+        },
+        "players_at_risk": [
+          {
+            "name": "Leandro Paredes",
+            "team": "away",
+            "position": "M",
+            "prob": 0.316
+          },
+          {
+            "name": "Niccolò Pisilli",
+            "team": "away",
+            "position": "M",
+            "prob": 0.305
+          },
+          {
+            "name": "Lewis Ferguson",
+            "team": "home",
+            "position": "M",
+            "prob": 0.274
+          },
+          {
+            "name": "Remo Freuler",
+            "team": "home",
+            "position": "M",
+            "prob": 0.24
+          },
+          {
+            "name": "Gianluca Mancini",
+            "team": "away",
+            "position": "D",
+            "prob": 0.228
+          },
+          {
+            "name": "Manu Koné",
+            "team": "away",
+            "position": "M",
+            "prob": 0.2
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 2,
+        "away_goals": 2
+      }
+    },
+    {
+      "fixture_id": 1223791,
+      "home": "Napoli",
+      "away": "Hellas Verona",
+      "date": "2025-01-12T19:45:00+00:00",
+      "referee": "L. Zufferli",
+      "markets": {
+        "1x2": {
+          "home": 0.651,
+          "draw": 0.212,
+          "away": 0.137
+        },
+        "goals": {
+          "over_1_5": 0.741,
+          "over_2_5": 0.493,
+          "over_3_5": 0.274,
+          "btts": 0.444
+        },
+        "multigol": {
+          "1-2": 0.436,
+          "2-3": 0.467,
+          "1-3": 0.655,
+          "2-4": 0.612,
+          "home_1-3": 0.725,
+          "away_1-3": 0.515
+        },
+        "cards": {
+          "expected": 3.31,
+          "over_3_5": 0.423,
+          "over_4_5": 0.24,
+          "over_5_5": 0.119
+        },
+        "players_at_risk": [
+          {
+            "name": "Ondrej Duda",
+            "team": "away",
+            "position": "M",
+            "prob": 0.362
+          },
+          {
+            "name": "Diego Coppola",
+            "team": "away",
+            "position": "D",
+            "prob": 0.356
+          },
+          {
+            "name": "Tomáš Suslov",
+            "team": "away",
+            "position": "F",
+            "prob": 0.224
+          },
+          {
+            "name": "Reda Belahyane",
+            "team": "away",
+            "position": "M",
+            "prob": 0.223
+          },
+          {
+            "name": "Juan Jesus",
+            "team": "home",
+            "position": "D",
+            "prob": 0.213
+          },
+          {
+            "name": "Paweł Dawidowicz",
+            "team": "away",
+            "position": "D",
+            "prob": 0.181
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 2,
+        "away_goals": 0
+      }
+    },
+    {
+      "fixture_id": 1223790,
+      "home": "Monza",
+      "away": "Fiorentina",
+      "date": "2025-01-13T19:45:00+00:00",
+      "referee": "F. Dionisi",
+      "markets": {
+        "1x2": {
+          "home": 0.291,
+          "draw": 0.267,
+          "away": 0.442
+        },
+        "goals": {
+          "over_1_5": 0.709,
+          "over_2_5": 0.451,
+          "over_3_5": 0.238,
+          "btts": 0.498
+        },
+        "multigol": {
+          "1-2": 0.465,
+          "2-3": 0.47,
+          "1-3": 0.678,
+          "2-4": 0.602,
+          "home_1-3": 0.636,
+          "away_1-3": 0.7
+        },
+        "cards": {
+          "expected": 3.95,
+          "over_3_5": 0.557,
+          "over_4_5": 0.362,
+          "over_5_5": 0.207
+        },
+        "players_at_risk": [
+          {
+            "name": "Armando Izzo",
+            "team": "home",
+            "position": "D",
+            "prob": 0.429
+          },
+          {
+            "name": "Luca Ranieri",
+            "team": "away",
+            "position": "D",
+            "prob": 0.308
+          },
+          {
+            "name": "Warren Bondo",
+            "team": "home",
+            "position": "M",
+            "prob": 0.265
+          },
+          {
+            "name": "Pietro Comuzzo",
+            "team": "away",
+            "position": "D",
+            "prob": 0.206
+          },
+          {
+            "name": "Amir Richardson",
+            "team": "away",
+            "position": "M",
+            "prob": 0.202
+          },
+          {
+            "name": "Jean-Daniel Akpa Akpro",
+            "team": "home",
+            "position": "M",
+            "prob": 0.184
+          }
+        ]
+      },
+      "result": {
+        "home_goals": 2,
+        "away_goals": 1
+      }
+    }
+  ]
+}

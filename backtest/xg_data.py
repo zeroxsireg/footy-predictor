@@ -52,7 +52,7 @@ async def fetch_xg_map(league_id: int, season: int) -> Dict[str, Dict]:
     Fetch xG for every finished fixture of a league-season.
 
     Returns {str(fixture_id): {"home_xg": x, "away_xg": y}}. Requires the season
-    fixtures to be cached already (run_backtest.py fetches them).
+    fixtures to be cached already (research.run_backtest fetches them).
     """
     fixtures = load_fixtures(cache_path(league_id, season))
     finished = [f for f in fixtures if f.get("status") == "FT"]

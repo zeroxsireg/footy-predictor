@@ -13,16 +13,15 @@ per scaricare una stagione, poi zero.
 
 ```bash
 # 1) Backtest del modello attuale su una stagione (scarica+cachea al primo giro)
-python run_backtest.py --season 2024                 # Serie A 2024/25
+python -m research.run_backtest --season 2024                 # Serie A 2024/25
 
 # 2) Confronto modelli sui gol/1X2 (baseline vs Poisson-forze vs Dixon-Coles)
-python run_backtest.py --season 2024 --compare
+python -m research.run_backtest --season 2024 --compare
 
 # 3) Modello 1X2 avanzato: ablation delle tecniche (multi-stagione, decay, shrink)
-python run_advanced.py --league 135 --target-season 2024 --history 2022,2023
+python -m research.run_advanced --league 135 --target-season 2024 --history 2022,2023
 
 # 4) Ensemble: Poisson-forze vs Glicko-2 vs media dei due
-python run_advanced.py --target-season 2024 --history 2022,2023 --ensemble
 ```
 
 Opzioni utili: `--league <id>` (135=Serie A, 39=Premier, 140=Liga, 78=Bundes),
@@ -52,8 +51,6 @@ predizione, quindi il futuro non può contaminare il passato. Il test
 | `engine.py` | Replay cronologico point-in-time. `iter_scored_matches` (stat aggregate, baseline) e `iter_match_contexts` (split casa/trasferta + medie lega). |
 | `models.py` | 3 modelli sui gol/1X2: `baseline` (attuale), `poisson_strength` (forze attacco/difesa + fattore campo), `dixon_coles` (+ correzione low-score). |
 | `advanced.py` | Modello 1X2 avanzato: multi-stagione + time-decay `exp(-ξt)` + **fattore campo globale** + **shrinkage bayesiano**. |
-| `glicko.py` | Rating Glicko-2 per il calcio (home advantage + margin-of-victory), 1X2 via rating→supremacy→Poisson. |
-| `ensemble.py` | Confronto 3-vie (Poisson / Glicko-2 / media) in un unico passaggio point-in-time. |
 | `ablation.py` | Isola l'effetto di ogni tecnica (multi-stagione, ξ, shrinkage) sulle stesse partite. |
 | `metrics.py` | Brier, Brier Skill, calibrazione, **RPS** (standard per l'1X2). |
 | `runner.py` / `report.py` | Orchestrazione e tabelle Rich. |
@@ -88,7 +85,7 @@ Testato su ~3000 partite reali, 5 leghe europee, stagioni 2022–2024.
    accademici avanzati (0.195–0.204). Cosa paga (isolato dall'ablation):
    *shrinkage* sempre, *multi-stagione* è la leva più forte, *time-decay*
    marginale e solo con ξ piccolo (~0.001–0.003/giorno).
-5. **Glicko-2 ed ensemble non migliorano**: il Glicko usa solo W/D/L+margine,
+5. **Glicko-2 ed ensemble non migliorano** (moduli rimossi in v2-lean, recuperabili da `main`): il Glicko usa solo W/D/L+margine,
    il Poisson usa tutti i gol (più segnale) → l'ensemble viene trascinato giù.
 
 **Caveat fondamentale:** "modello competente" ≠ "batte il bookmaker". Battere la

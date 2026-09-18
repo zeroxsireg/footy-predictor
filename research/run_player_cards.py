@@ -7,8 +7,8 @@ on Serie A / La Liga, reporting Brier/skill, discrimination (booked vs unbooked)
 and ranking quality (precision@k: are the actually-booked players near the top?).
 
 Usage:
-    python run_player_cards.py                 # Serie A 2024, history 2023
-    python run_player_cards.py --league 140
+    python -m research.run_player_cards                 # Serie A 2024, history 2023
+    python -m research.run_player_cards --league 140
 """
 
 import argparse

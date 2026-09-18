@@ -308,3 +308,32 @@ Per domande o problemi:
 
 **🎉 Il modulo è pronto e completamente funzionale!**
 
+
+---
+
+## Lean pipeline: layer `market_data` (v2-lean, solo Serie A)
+
+Facciata async in `core/market_data.py` (moduli: `market_http.py` accesso API/cache mai-raise, `market_prices.py`
+quote, `market_fixtures.py` partite/risultati/formazioni). Usa i dataclass di `core/contracts.py`; ogni funzione
+degrada a valore neutro (`[]`, `{}`, `None`) su errori di rete/API. Cache SQLite (`utils/cache_manager`): quote 600s,
+`/fixtures/players` di partite finite senza scadenza. Pacing: chiamate sequenziali con >=1s (client HTTP), sotto il
+limite di 5 per batch.
+
+### Payload verificati (fixture 1550135, Serie A 2026 giornata 5, 18/09/2026)
+- `/odds?fixture=ID`: `response[0].bookmakers[] = {id, name, bets[]}`; `bets[] = {id, name, values[{value, odd}]}`, `odd`
+  e' una STRINGA. Bet 1 "Match Winner": value `Home`/`Draw`/`Away` (es. Bet365 2.25/3.30/3.30). Bet 5 "Goals Over/Under":
+  value `Over 2.5`/`Under 2.5` (Bet365 2.10/1.73), presenti anche linee 0.5..3.5; Pinnacle ha anche linee asiatiche
+  (1.75, 2.25...) ma include sempre 2.5 (2.19/1.73). Bookmaker presenti: 2,3,4,5,7,8,11,32,36 (Bwin id 6 assente
+  su questa partita: la priorita' scala su William Hill/Betfair).
+- Selezione: un solo bookmaker per mercato con priorita' 8>6>7>3; il mercato deve avere TUTTE le selezioni valide
+  (odd>1), altrimenti si passa al successivo; se nessuno dei 4, primo bookmaker completo. Benchmark: solo Pinnacle
+  (id 4), nessun fallback.
+- `/fixtures/players?fixture=ID`: per squadra `players[].statistics[0].games` = `{minutes (null se non entrato),
+  substitute (false=titolare), position (G/D/M/F)}` e `cards.yellow`. Fonte scelta per i gialli (coincide con
+  `/fixtures/events` sulla partita verificata 1550120: Mkhitaryan 1457, Davis 19185; events non copre i giocatori
+  senza evento e distingue male il doppio giallo).
+- `/fixtures/lineups?fixture=ID`: per squadra `startXI[]`/`substitutes[]` con `player={id,name,number,pos,grid}`;
+  risposta vuota (`[]`) prima della pubblicazione (~60' pre-gara), verificato su partita futura.
+- `get_probable_xi`: denominatore = partite FT effettivamente trovate (<= n).
+- `refresh_current_season_data`: scrive SOLO `league_135_season_<corrente>.json` e `xg_league_135_season_<corrente>.json`
+  (incrementale, mai riscrive voci esistenti; scarico fixtures vuoto non sovrascrive; stagioni storiche rifiutate).

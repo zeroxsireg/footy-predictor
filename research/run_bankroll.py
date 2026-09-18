@@ -7,8 +7,8 @@ selections (1X2 + Over/Under 2.5) through a completed season at best-available
 odds, reporting the final bankroll.
 
 Usage:
-    python run_bankroll.py                       # $100 each on Serie A/Liga/Premier 2026/27
-    python run_bankroll.py --season 2024 --edge 0.03
+    python -m research.run_bankroll                       # $100 each on Serie A/Liga/Premier 2026/27
+    python -m research.run_bankroll --season 2024 --edge 0.03
 """
 
 import argparse

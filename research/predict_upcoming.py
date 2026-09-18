@@ -7,9 +7,9 @@ exactly how the product will work live once the season starts. Off-season demo:
 picks a real past match, predicts it forward, then reveals what happened.
 
 Usage:
-    python predict_upcoming.py                          # Serie A: Napoli vs Juventus
-    python predict_upcoming.py --home Roma --away Lazio
-    python predict_upcoming.py --league 140 --home Barcelona --away "Real Madrid"
+    python -m research.predict_upcoming                          # Serie A: Napoli vs Juventus
+    python -m research.predict_upcoming --home Roma --away Lazio
+    python -m research.predict_upcoming --league 140 --home Barcelona --away "Real Madrid"
 """
 
 import argparse

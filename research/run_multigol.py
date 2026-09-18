@@ -3,8 +3,8 @@
 Multigol backtest (derived from the xG model, no extra data).
 
 Usage:
-    python run_multigol.py                     # Serie A 2024, history 2023
-    python run_multigol.py --league 140
+    python -m research.run_multigol                     # Serie A 2024, history 2023
+    python -m research.run_multigol --league 140
 """
 
 import argparse

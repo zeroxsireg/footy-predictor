@@ -7,8 +7,8 @@ xG-fed model on the same matches and markets, scored with Brier / Brier-skill
 and RPS (for 1X2).
 
 Usage:
-    python run_xg.py                       # Serie A 2024/25
-    python run_xg.py --league 135 --season 2024 --refresh-xg
+    python -m research.run_xg                       # Serie A 2024/25
+    python -m research.run_xg --league 135 --season 2024 --refresh-xg
 """
 
 import argparse
@@ -51,7 +51,7 @@ def main():
     try:
         fixtures = load_seasons(args.league, all_seasons)
     except FileNotFoundError:
-        print("❌ Fixtures non in cache. Esegui prima run_backtest.py per ogni stagione: "
+        print("❌ Fixtures non in cache. Esegui prima research.run_backtest per ogni stagione: "
               + ", ".join(str(s) for s in all_seasons))
         sys.exit(1)
 

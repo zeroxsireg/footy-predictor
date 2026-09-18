@@ -220,10 +220,12 @@ def normalize_position(raw) -> str:
 
 def live_probability(appearances: int, yellows: int, position: str,
                      fouls: Optional[float] = None,
-                     params: CardModelParams = DEFAULT_PARAMS) -> Optional[float]:
+                     params: CardModelParams = DEFAULT_PARAMS,
+                     ref_factor: float = 1.0) -> Optional[float]:
     """
     P(booked) for one player from season totals. Few appearances -> the
-    position prior dominates. None when the player is out of scope (keeper,
+    position prior dominates. `ref_factor` is the referee strictness index
+    (core/referee.py, 1.0 = neutral). None when the player is out of scope (keeper,
     unknown position, never played).
     """
     pos = normalize_position(position)
@@ -235,5 +237,5 @@ def live_probability(appearances: int, yellows: int, position: str,
     if fouls is not None:
         stat.fouls_sum, stat.fouls_apps = float(fouls), int(appearances)
     foul_f = fouls_factor(stat, LIVE_FOULS_PER_APP, params)
-    raw = raw_probability(stat, LIVE_POSITION_PRIORS[pos], 1.0, foul_f, params)
+    raw = raw_probability(stat, LIVE_POSITION_PRIORS[pos], ref_factor, foul_f, params)
     return final_probability(raw)

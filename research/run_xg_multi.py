@@ -7,7 +7,7 @@ two most recent (fully xG-covered) seasons, and consolidates the result into
 one table per target season. Fully offline (reads cached fixtures + xG).
 
 Usage:
-    python run_xg_multi.py
+    python -m research.run_xg_multi
 """
 
 import asyncio

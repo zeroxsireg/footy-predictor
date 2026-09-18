@@ -297,3 +297,21 @@ END;
 CREATE TABLE IF NOT EXISTS api_cache (key TEXT PRIMARY KEY, value TEXT NOT NULL, ttl_type TEXT, expires_at TIMESTAMP, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
 CREATE INDEX IF NOT EXISTS idx_api_cache_expires ON api_cache(expires_at);
 -- END api_cache
+
+-- =====================================================
+-- LEDGER FORWARD (paper trading, gestito da core/ledger.py; letto tra i marker)
+-- =====================================================
+-- BEGIN ledger
+CREATE TABLE IF NOT EXISTS ledger_predictions (fixture_id INTEGER PRIMARY KEY, model TEXT NOT NULL, p1 REAL NOT NULL, px REAL NOT NULL, p2 REAL NOT NULL, p_over_2_5 REAL NOT NULL, created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS ledger_snapshots (id INTEGER PRIMARY KEY AUTOINCREMENT, fixture_id INTEGER NOT NULL, market TEXT NOT NULL, bookmaker TEXT NOT NULL, bookmaker_id INTEGER, odds_json TEXT NOT NULL, kind TEXT NOT NULL CHECK (kind IN ('pick','close','benchmark_pick','benchmark_close')), captured_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_ledger_snap_fixture ON ledger_snapshots(fixture_id, kind);
+CREATE TABLE IF NOT EXISTS ledger_bets (id INTEGER PRIMARY KEY AUTOINCREMENT, strategy TEXT NOT NULL, fixture_id INTEGER NOT NULL, market TEXT NOT NULL, selection TEXT NOT NULL, odds REAL NOT NULL, bookmaker TEXT NOT NULL, p_model REAL, p_used REAL NOT NULL, p_fair REAL NOT NULL, ev REAL NOT NULL, stake_amount REAL NOT NULL, stake_fraction REAL NOT NULL, created_at TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open','won','lost','void')), profit REAL, closing_odds REAL, clv REAL, settled_at TEXT, UNIQUE(strategy, fixture_id, market, selection));
+CREATE INDEX IF NOT EXISTS idx_ledger_bets_status ON ledger_bets(status, fixture_id);
+CREATE TABLE IF NOT EXISTS ledger_bankroll (strategy TEXT PRIMARY KEY, bankroll REAL NOT NULL, high_water_mark REAL NOT NULL, updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS ledger_player_predictions (fixture_id INTEGER NOT NULL, player_id INTEGER NOT NULL, name TEXT, team TEXT, p_given REAL, start_prob REAL, p_booked REAL NOT NULL, booked INTEGER, created_at TEXT NOT NULL, settled_at TEXT, PRIMARY KEY (fixture_id, player_id));
+CREATE TABLE IF NOT EXISTS ledger_results (fixture_id INTEGER PRIMARY KEY, home_goals INTEGER NOT NULL, away_goals INTEGER NOT NULL, settled_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS ledger_tips (id INTEGER PRIMARY KEY AUTOINCREMENT, fixture_id INTEGER NOT NULL, key TEXT NOT NULL, family TEXT NOT NULL, probability REAL NOT NULL, fair_odds REAL NOT NULL, min_odds REAL NOT NULL, reliability TEXT NOT NULL, selected INTEGER NOT NULL DEFAULT 0, quote_odds REAL, quote_bookmaker TEXT, created_at TEXT NOT NULL, outcome INTEGER, settled_at TEXT, UNIQUE(fixture_id, key));
+CREATE TABLE IF NOT EXISTS ledger_multiples (id INTEGER PRIMARY KEY AUTOINCREMENT, fixture_ids_json TEXT NOT NULL, keys_json TEXT NOT NULL, probability REAL NOT NULL, fair_odds REAL NOT NULL, min_odds REAL NOT NULL, created_at TEXT NOT NULL, outcome INTEGER, settled_at TEXT, UNIQUE(fixture_ids_json, keys_json));
+CREATE TABLE IF NOT EXISTS ledger_tip_quotes (id INTEGER PRIMARY KEY AUTOINCREMENT, fixture_id INTEGER NOT NULL, key TEXT NOT NULL, bookmaker TEXT NOT NULL, bookmaker_id INTEGER, odds REAL NOT NULL, captured_at TEXT NOT NULL, kind TEXT NOT NULL CHECK (kind IN ('pick','close')));
+CREATE INDEX IF NOT EXISTS idx_ledger_tip_quotes_fx ON ledger_tip_quotes(fixture_id, key, kind);
+-- END ledger

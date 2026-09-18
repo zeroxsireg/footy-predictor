@@ -62,27 +62,28 @@ REDIS_DB=0
 ## 🚀 Utilizzo
 
 ```bash
-python main.py interactive     # 🎯 Menu guidato (RACCOMANDATO)
-python main.py matchday        # analizza la prossima giornata
 python main.py config          # mostra la configurazione corrente
+python main.py cache           # statistiche della cache
 ```
 
-| Comando | Descrizione |
-|---|---|
-| `interactive` | Menu: scegli campionato e partita, poi analisi completa |
-| `matchday` | Analizza tutte le partite della prossima giornata |
-| `config` | Mostra la configurazione corrente |
-| `cache` | Statistiche della cache Redis |
-| `bookmakers` | Elenca i bookmaker disponibili |
-| `bets` | Elenca i mercati di scommessa disponibili |
-| `players` | Statistiche giocatori presenti in cache |
-
-Opzioni per `matchday`:
+### Paper trading (Serie A, max 3 singole per giorno e strategia)
 
 ```bash
-python main.py matchday --league "Serie A" --country "Italy" --season 2025
-python main.py matchday -l "Premier League" -c "England" -s 2025
+python main.py today [--days 3] [--dry-run]   # analisi, singole del giorno, ammoniti
+python main.py close [--minutes 15]           # quote di chiusura (per il CLV)
+python main.py settle                         # liquida le partite finite
+python main.py report [--strategy raw]        # cassa, ROI, CLV, calibrazione
+python main.py players <fixture_id>           # candidati ammoniti di una partita
 ```
+
+Ciclo: `today` la mattina -> `close` 10-15 minuti prima del via -> `settle` il giorno dopo
+-> `report`. `--dry-run` non scrive nel ledger né aggiorna i file dati. Bankroll virtuale
+50 EUR per strategia, nessuna scommessa reale. Con pochi bet il report avvisa che il
+campione è insufficiente.
+
+> **v2-lean:** i comandi `interactive`, `matchday`, `bookmakers`, `bets`
+> sono stati rimossi (recuperabili dal branch `main`). Gli script di ricerca/backtest stanno in
+> `research/` (es. `python -m research.run_backtest --league 135 --season 2025 --compare`).
 
 > **Nota leghe:** di default è abilitata **solo la Serie A** (`config/leagues.py`).
 > Le altre (Premier, Liga, Bundesliga, Ligue 1, coppe) si riattivano impostando
@@ -95,16 +96,16 @@ python main.py matchday -l "Premier League" -c "England" -s 2025
 ```
 footy-predictor/
 ├── main.py               # entry point → cli/simple_main.py (router argv)
-├── cli/                  # router comandi, menu interattivo, display
+├── cli/                  # router comandi (config, cache) e render
 ├── adapters/             # client API-Football (http, football_api, odds_api,
 │                         #   roster/stats services)
 ├── analyzers/            # analyzer di mercato + orchestrator plugin registry
 ├── betting/              # BettingOrchestrator (coordina gli analyzer)
 ├── core/                 # config, models, edge_calculator, odds_fetcher,
-│                         #   pick_selector, daily_league_analyzer, ...
+│                         #   value_selection, ...
 ├── config/               # leagues.py (leghe supportate)
 ├── database/             # db_manager + schema.sql (storico giocatori, SQLite)
-├── services/             # data_service
+├── research/             # script di backtest/ricerca (python -m research.<script>)
 ├── utils/                # redis_cache e utilità varie
 ├── backtest/             # backtesting dei modelli (README dedicato)
 ├── tests/                # suite pytest

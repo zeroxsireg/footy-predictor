@@ -5,8 +5,8 @@ Batch prediction for a whole matchday — a compact "coupon" view.
 Off-season demo: predicts every match of a historical round from prior data.
 
 Usage:
-    python predict_round.py                      # Serie A 2024, round 20
-    python predict_round.py --league 140 --round 30
+    python -m research.predict_round                      # Serie A 2024, round 20
+    python -m research.predict_round --league 140 --round 30
 """
 
 import argparse

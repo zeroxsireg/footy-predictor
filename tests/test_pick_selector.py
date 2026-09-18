@@ -5,9 +5,9 @@ from datetime import datetime
 import pytest
 
 from core.daily_models import DailyPick
-from core.daily_league_analyzer import DailyLeagueAnalyzer
-from core.pick_selector import PickSelector
-from core.value_selection import MAX_STAKE_FRACTION, MIN_EV_THRESHOLD, annotate_value
+from core.value_selection import (
+    MAX_STAKE_FRACTION, MIN_EV_THRESHOLD, annotate_value, select_value_picks,
+)
 
 
 def _pick(pct=60.0, odds=None, book="Bet365", market="Match Goals", conf="HIGH"):
@@ -16,28 +16,6 @@ def _pick(pct=60.0, odds=None, book="Bet365", market="Match Goals", conf="HIGH")
         confidence=conf, percentage=pct, reasoning="", match_time=datetime(2025, 1, 1),
         league="L", real_odds=odds, bookmaker=book if odds else None,
     )
-
-
-# ── E: combos never use invented odds ────────────────────────────────────────
-
-def test_combo_odds_multiply_real_quotes():
-    sel = PickSelector()
-    assert sel._calculate_combo_odds([_pick(odds=2.0), _pick(odds=1.5)]) == 3.0
-
-
-def test_combo_odds_none_when_any_leg_has_no_real_quote():
-    sel = PickSelector()
-    assert sel._calculate_combo_odds([_pick(odds=2.0), _pick(pct=50.0)]) is None
-
-
-def test_incomplete_combos_are_not_recommended_and_are_counted():
-    sel = PickSelector()
-    priced = [_pick(odds=1.8) for _ in range(3)]
-    assert len(sel._generate_combinations(priced)) >= 1
-    mixed = [_pick(odds=1.8), _pick(odds=1.8), _pick(pct=75.0)]
-    assert sel._generate_combinations(mixed) == []
-    assert sel.skipped_combinations >= 1
-    assert sel._create_summary(mixed, mixed, [])["combinations_skipped_no_odds"] >= 1
 
 
 # ── G: single value bets ─────────────────────────────────────────────────────
@@ -76,22 +54,5 @@ def test_select_value_picks_sorted_by_ev_and_includes_player_cards():
     card = _pick(pct=55.0, odds=2.2, market="Player Card - Rossi")   # EV +21%
     none_odds = _pick(pct=90.0)
     losing = _pick(pct=40.0, odds=2.0)
-    out = PickSelector().select_value_picks([low, none_odds, high, losing, card])
+    out = select_value_picks([low, none_odds, high, losing, card])
     assert out == [card, high, low]
-
-
-# ── F: market categories ─────────────────────────────────────────────────────
-
-@pytest.mark.parametrize("market,expected", [
-    ("Inter Goals", "Goals"),
-    ("Match Goals", "Goals"),
-    ("Both Teams to Score", "BTTS"),
-    ("Match Result", "Result"),
-    ("Total Shots", "Shots"),
-    ("Total Shots: Over 16.5", "Shots"),
-    ("Inter Corners", "Corners"),
-    ("Total Cards", "Cards"),
-    ("Something Else", "Other"),
-])
-def test_market_category(market, expected):
-    assert DailyLeagueAnalyzer._get_market_category(None, market) == expected

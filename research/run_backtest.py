@@ -6,9 +6,9 @@ Replays a completed season and measures how well the model predicts
 (Brier score, hit-rate, calibration) — no betting odds involved.
 
 Usage:
-    python run_backtest.py                    # Serie A 2026/27, from cache
-    python run_backtest.py --refresh          # force a fresh API download
-    python run_backtest.py --league 39 --season 2024 --min-matches 5
+    python -m research.run_backtest                    # Serie A 2026/27, from cache
+    python -m research.run_backtest --refresh          # force a fresh API download
+    python -m research.run_backtest --league 39 --season 2024 --min-matches 5
 
 The season data is fetched from the API only once (a single bulk call) and
 cached under backtest/data/; every later run is fully offline.

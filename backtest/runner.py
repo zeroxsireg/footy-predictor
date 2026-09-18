@@ -2,7 +2,7 @@
 Backtest orchestration: replay -> predict -> score -> report.
 
 Pure functions here (run_backtest) so they're easy to unit-test; the pretty
-printing lives in report_text() and the CLI in run_backtest.py at repo root.
+printing lives in report_text() and the CLI in research.run_backtest at repo root.
 """
 
 from dataclasses import dataclass

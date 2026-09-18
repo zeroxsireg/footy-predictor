@@ -6,8 +6,8 @@ Writes predictions/league_<id>/season_<yr>/round_<n>.json — the data contract
 the frontend (Fase 3) will consume.
 
 Usage:
-    python generate_json.py --round 20
-    python generate_json.py --leagues 135,140 --season 2024 --round 20
+    python -m research.generate_json --round 20
+    python -m research.generate_json --leagues 135,140 --season 2024 --round 20
 """
 
 import argparse

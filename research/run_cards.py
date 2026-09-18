@@ -7,7 +7,7 @@ Fetches per-match cards (once, cached) and backtests the cards model
 reporting Brier/skill/calibration and the mean error of expected vs actual.
 
 Usage:
-    python run_cards.py                     # Serie A 2024, history 2023
+    python -m research.run_cards                     # Serie A 2024, history 2023
 """
 
 import argparse

@@ -9,8 +9,8 @@ closing preferred; the actual book used is reported) and prints:
   - our Brier vs the market's Brier, average edge.
 
 Usage:
-    python run_clv.py                               # Serie A 2024, history 2023
-    python run_clv.py --season 2024 --history 2023 --edge 0.03
+    python -m research.run_clv                               # Serie A 2024, history 2023
+    python -m research.run_clv --season 2024 --history 2023 --edge 0.03
 """
 
 import argparse

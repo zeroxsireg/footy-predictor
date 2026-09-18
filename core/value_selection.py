@@ -14,8 +14,15 @@ from typing import List, Optional
 
 from .edge_calculator import KELLY_FRACTION, calculate_edge, calculate_ev, calculate_kelly
 
-MIN_EV_THRESHOLD = 0.03      # tau, rule 7
-MAX_STAKE_FRACTION = 0.02    # per-bet cap on bankroll, rule 8
+MIN_EV_THRESHOLD = 0.03      # tau, rule 7 (SSOT: value_engine imports it from here)
+MAX_STAKE_FRACTION = 0.025   # per-bet cap on bankroll, rule 8
+MAX_DAILY_FRACTION = 0.12    # cap on the total bankroll fraction staked per day/strategy
+BREAKER_KELLY_FRACTION = 0.125   # Kelly multiplier while the circuit breaker is active
+BREAKER_DRAWDOWN = 0.20      # drawdown from high-water mark that trips the breaker
+INITIAL_BANKROLL = 50.00     # paper bankroll per strategy
+STAKE_STEP = 0.05            # currency rounding
+MIN_STAKE = 0.10             # below this the bet is discarded
+MAX_DAILY_PICKS = 3
 
 
 def ev_fraction(prob: float, odds: float) -> float:

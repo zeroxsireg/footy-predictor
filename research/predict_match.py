@@ -9,9 +9,9 @@ match, and shows the ACTUAL result alongside so you can judge it.
 Off-season demo: runs on a real, already-played match.
 
 Usage:
-    python predict_match.py                              # Serie A: Inter vs Milan 2024/25
-    python predict_match.py --home Roma --away Lazio
-    python predict_match.py --league 140 --home Barcelona --away Real Madrid
+    python -m research.predict_match                              # Serie A: Inter vs Milan 2024/25
+    python -m research.predict_match --home Roma --away Lazio
+    python -m research.predict_match --league 140 --home Barcelona --away Real Madrid
 """
 
 import argparse

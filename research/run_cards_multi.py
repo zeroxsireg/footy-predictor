@@ -7,7 +7,7 @@ consolidates Brier skill per Over line plus the expected-vs-actual calibration,
 to confirm the positive skill seen on Serie A is robust. Fully offline.
 
 Usage:
-    python run_cards_multi.py
+    python -m research.run_cards_multi
 """
 
 import asyncio

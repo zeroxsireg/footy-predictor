@@ -1,1 +1,0 @@
-"""Utility menu components package."""

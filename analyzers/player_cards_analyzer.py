@@ -9,6 +9,11 @@ and players without minutes are skipped. Each squad player's current-season
 totals are added to the previous season's (same setup as the backtest, which
 used one prior season of history): early in a season the current totals alone
 carry no signal.
+
+OBSOLETE for the lean pipeline (Serie A singles): the ranked candidates with probable
+XI, referee strictness and start probability live in core/player_candidates.py. Both
+paths share the same estimator (core.player_card_model.live_probability); this
+analyzer's DailyPick output is kept only for the legacy CLI/tests.
 """
 
 from typing import Dict, List, Optional

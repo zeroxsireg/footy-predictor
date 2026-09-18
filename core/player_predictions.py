@@ -150,10 +150,10 @@ class MatchPlayerPredictions:
 class PlayerCardPredictor:
     """Predicts player card probabilities."""
     
-    def __init__(self):
+    def __init__(self, history_db=None):
         self.api_client = FootballAPIClient()
         self.odds_client = OddsAPIClient()
-        # self.history_db = PlayerHistoryDatabase()  # Removed - file deleted during cleanup
+        self.history_db = history_db
     
     async def analyze_match_players(self, fixture: Fixture, league_id: int, season: int) -> MatchPlayerPredictions:
         """Analyze players for card predictions in a match."""
@@ -192,8 +192,13 @@ class PlayerCardPredictor:
                 if not player_data.get("name"):
                     continue
                 
-                # Get historical data for this player
-                historical_data = self.history_db.get_player_history(player_data["name"], seasons=2)
+                # Get historical data for this player if history_db is configured
+                historical_data = []
+                if self.history_db:
+                    try:
+                        historical_data = self.history_db.get_player_history(player_data["name"], seasons=2)
+                    except Exception:
+                        historical_data = []
                 
                 # Ensure minimum values for better predictions (handle None values)
                 appearances = max(player_data.get("appearances") or 0, 1)
@@ -254,15 +259,26 @@ class PlayerCardPredictor:
             else:
                 team_name = self._current_fixture.away_team.name
         
-        # Use historical top card players for this team
-        historical_players = self.history_db.get_team_top_cards(team_name, season - 1, limit=6)
+        # Use historical top card players for this team if available
+        historical_players = []
+        if self.history_db:
+            try:
+                historical_players = self.history_db.get_team_top_cards(team_name, season - 1, limit=6)
+            except Exception:
+                historical_players = []
         
         players = []
         
         if historical_players:
             for i, hist_player in enumerate(historical_players):
-                current_appearances = min(hist_player.appearances + 2, 20)
-                historical_data = self.history_db.get_player_history(hist_player.player_name, seasons=2)
+                current_appearances = min(getattr(hist_player, "appearances", 10) + 2, 20)
+                historical_data = []
+                if self.history_db:
+                    try:
+                        p_name = getattr(hist_player, "player_name", str(hist_player))
+                        historical_data = self.history_db.get_player_history(p_name, seasons=2)
+                    except Exception:
+                        historical_data = []
                 
                 player = PlayerStats(
                     id=team_id * 100 + i,

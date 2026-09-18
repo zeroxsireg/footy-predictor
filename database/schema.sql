@@ -1,7 +1,11 @@
 -- =====================================================
 -- FOOTY PREDICTOR - DATABASE SCHEMA
--- Ottimizzato per performance frontend (< 50ms queries)
+-- Ottimizzato per performance frontend (< 50ms queries) e WAL mode
 -- =====================================================
+
+PRAGMA journal_mode = WAL;
+PRAGMA synchronous = NORMAL;
+PRAGMA foreign_keys = ON;
 
 -- =====================================================
 -- LEAGUES
@@ -121,6 +125,29 @@ CREATE TABLE IF NOT EXISTS player_card_tips (
 CREATE INDEX idx_player_tips_fixture ON player_card_tips(fixture_id);
 CREATE INDEX idx_player_tips_confidence ON player_card_tips(confidence DESC);
 CREATE INDEX idx_player_tips_status ON player_card_tips(status);
+
+-- =====================================================
+-- PLAYER HISTORY (Storico disciplinare per modello cartellini)
+-- =====================================================
+CREATE TABLE IF NOT EXISTS player_history (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_name TEXT NOT NULL,
+    team_name TEXT NOT NULL,
+    league TEXT NOT NULL,
+    season INTEGER NOT NULL,
+    appearances INTEGER DEFAULT 0,
+    minutes_played INTEGER DEFAULT 0,
+    yellow_cards INTEGER DEFAULT 0,
+    red_cards INTEGER DEFAULT 0,
+    fouls_committed INTEGER DEFAULT 0,
+    position TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(player_name, team_name, league, season)
+);
+
+CREATE INDEX IF NOT EXISTS idx_player_history_name ON player_history(player_name);
+CREATE INDEX IF NOT EXISTS idx_player_history_team ON player_history(team_name);
+CREATE INDEX IF NOT EXISTS idx_player_history_season ON player_history(season);
 
 -- =====================================================
 -- TEAM STATISTICS (Cached)

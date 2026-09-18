@@ -259,22 +259,20 @@ class DailyLeagueAnalyzer:
             return None
 
     def _get_market_category(self, market: str) -> str:
-        """Determina categoria principale del mercato."""
-        if "Match Goals" in market or "Over" in market or "Under" in market:
-            return "Goals"
-        elif "Both Teams to Score" in market or "BTTS" in market:
+        """Determina categoria principale del mercato (Goals include i gol per squadra)."""
+        if "Both Teams to Score" in market or "BTTS" in market:
             return "BTTS"
-        elif "Match Result" in market or "(Home Win)" in market or "(Draw)" in market or "(Away Win)" in market:
+        if "Match Result" in market or "(Home Win)" in market or "(Draw)" in market or "(Away Win)" in market:
             return "Result"
-        elif "Shots" in market:
-            return "Shots"
-        elif "Corners" in market:
-            return "Corners"
-        elif "Cards" in market:
-            return "Cards"
-        else:
-            return "Other"
-    
+        # Specific stat markets first: their names may also contain "Over"/"Under".
+        for keyword, category in (("Shots", "Shots"), ("Corners", "Corners"), ("Cards", "Cards")):
+            if keyword in market:
+                return category
+        # "Match Goals", "<Team> Goals" and plain Over/Under lines
+        if "Goals" in market or "Over" in market or "Under" in market:
+            return "Goals"
+        return "Other"
+
     def _normalize_market_name(self, market: str) -> str:
         """
         Normalizza il nome del mercato per evitare duplicati.

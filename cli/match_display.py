@@ -6,7 +6,15 @@ player cards picks, exact scores, and betting summary.
 No routing, no business logic, no API calls.
 """
 
-from typing import List, Optional
+import asyncio
+import logging
+
+import httpx
+
+from cli.betting_render import render_betting_analysis, _render_rec  # noqa: F401 (re-export)
+from cli.player_cards_display import display_player_cards_picks as _display_player_cards
+
+logger = logging.getLogger(__name__)
 
 
 # ── match header + stats ──────────────────────────────────────────────────────
@@ -151,12 +159,27 @@ def _print_team_stats(home_stats, away_stats):
 
 # ── betting predictions ───────────────────────────────────────────────────────
 
+def _apply_market_odds(rec, market_odds) -> bool:
+    """Attach a MarketOdds (dataclass) to a recommendation and compute edge/EV/Kelly."""
+    from core.edge_calculator import evaluate_bet
+
+    odds = getattr(market_odds, "odds", None)
+    if not odds:
+        return False
+    rec.real_odds = odds
+    rec.bookmaker = getattr(market_odds, "bookmaker_name", None) or "N/A"
+    decision = evaluate_bet(rec.percentage, rec.real_odds)
+    rec.edge = decision.edge
+    rec.ev_percent = decision.ev_percent
+    rec.kelly_quarter = decision.kelly_quarter
+    rec.verdict = decision.verdict
+    return True
+
+
 async def display_betting_predictions(prediction, league_id=None, season=None):
     """Orchestrate betting analysis + odds enrichment, then render."""
     from betting.orchestrator import BettingOrchestrator
     from core.odds_fetcher import OddsFetcher
-    from core.edge_calculator import evaluate_bet
-
     if not prediction.home_stats or not prediction.away_stats:
         print("⚠️  Statistiche non disponibili per questa partita")
         return None
@@ -174,187 +197,20 @@ async def display_betting_predictions(prediction, league_id=None, season=None):
                 result = await odds_fetcher.get_odds_for_market(
                     fixture_id=fixture_id, market=rec.market, selection=rec.selection
                 )
-                if result and result.get("odds"):
-                    rec.real_odds = result["odds"]
-                    rec.bookmaker = result.get("bookmaker", "N/A")
-                    decision = evaluate_bet(rec.percentage, rec.real_odds)
-                    rec.edge = decision.edge
-                    rec.ev_percent = decision.ev_percent
-                    rec.kelly_quarter = decision.kelly_quarter
-                    rec.verdict = decision.verdict
-            except Exception:
-                pass
+            except (httpx.HTTPError, asyncio.TimeoutError, ConnectionError, OSError) as exc:
+                logger.warning("Odds unavailable for %s %s: %s", rec.market, rec.selection, exc)
+                continue
+            _apply_market_odds(rec, result)
 
     render_betting_analysis(analysis)
     return analysis
 
 
-def render_betting_analysis(analysis):
-    """Render a MatchBettingAnalysis to stdout."""
-    if not analysis.recommendations:
-        return
+# ── player cards (moved to cli/player_cards_display.py) ──────────────────────
 
-    # Category mapping
-    categories = {
-        "Match Goals": [], "Team Goals": [], "Both Teams to Score": [],
-        "Total Shots": [], "Total Shots on Goal": [],
-        "Team Shots": [], "Team Shots on Goal": [],
-        "Total Corners": [], "Team Corners": [],
-        "Total Cards": [], "Team Cards": [], "Match Result": [],
-    }
-
-    for rec in analysis.recommendations:
-        m = rec.market
-        if "Match Goals" in m:
-            categories["Match Goals"].append(rec)
-        elif "Both Teams to Score" in m:
-            categories["Both Teams to Score"].append(rec)
-        elif "Goals" in m and "Total" not in m and "Match" not in m:
-            categories["Team Goals"].append(rec)
-        elif "Goals" in m:
-            categories["Match Goals"].append(rec)
-        elif "Total Shots on Goal" in m:
-            categories["Total Shots on Goal"].append(rec)
-        elif "Total Shots" in m:
-            categories["Total Shots"].append(rec)
-        elif "Shots on Goal" in m:
-            categories["Team Shots on Goal"].append(rec)
-        elif "Shots" in m:
-            categories["Team Shots"].append(rec)
-        elif "Total Corners" in m:
-            categories["Total Corners"].append(rec)
-        elif "Corners" in m:
-            categories["Team Corners"].append(rec)
-        elif "Total Cards" in m:
-            categories["Total Cards"].append(rec)
-        elif "Cards" in m:
-            categories["Team Cards"].append(rec)
-        elif "Match Result" in m:
-            categories["Match Result"].append(rec)
-
-    icons = {
-        "Match Goals": "⚽", "Team Goals": "🎯", "Both Teams to Score": "🤝",
-        "Total Shots": "🏹", "Total Shots on Goal": "🎯",
-        "Team Shots": "🏹", "Team Shots on Goal": "🎯",
-        "Total Corners": "📐", "Team Corners": "🚩",
-        "Total Cards": "🟨", "Team Cards": "🟥", "Match Result": "🏆",
-    }
-    sections = {
-        "⚽ GOL E RISULTATO": ["Match Goals", "Team Goals", "Both Teams to Score", "Match Result"],
-        "🏹 TIRI": ["Total Shots", "Total Shots on Goal", "Team Shots", "Team Shots on Goal"],
-        "📐 CORNER": ["Total Corners", "Team Corners"],
-        "🟨 CARTELLINI": ["Total Cards", "Team Cards"],
-    }
-
-    print("\n┌─ 🎯 RACCOMANDAZIONI SCOMMESSE " + "─" * 20)
-    print("│")
-
-    for section_name, section_cats in sections.items():
-        if not any(categories.get(c) for c in section_cats):
-            continue
-        print(f"│")
-        print(f"│ {'═' * 50}")
-        print(f"│ {section_name}")
-        print(f"│ {'═' * 50}")
-
-        for cat in section_cats:
-            recs = categories.get(cat, [])
-            if not recs:
-                continue
-            print(f"│")
-            print(f"│ {icons[cat]} {cat}:")
-            print(f"│ {'─' * 48}")
-            high = [r for r in recs if r.confidence == "HIGH"]
-            medium = [r for r in recs if r.confidence == "MEDIUM"]
-            for rec in high:
-                _render_rec(rec, "🔥")
-            for rec in medium:
-                _render_rec(rec, "⚡")
-
-    print("└" + "─" * 52)
-
-    # Exact scores
-    if getattr(analysis, "exact_scores", None):
-        print("\n⚽ EXACT SCORE PREDICTIONS:")
-        print("═" * 40)
-        for i, sp in enumerate(analysis.exact_scores[:2], 1):
-            h, a = sp.score.split("-")
-            result_emoji = "🏠" if int(h) > int(a) else "✈️" if int(h) < int(a) else "🤝"
-            prob_color = "🔴" if sp.probability >= 15 else "🟠" if sp.probability >= 10 else "🟡"
-            print(f"{i}. {result_emoji} {sp.score}")
-            print(f"   {prob_color} Probability: {sp.probability:.1f}% │ 💰 Odds: {sp.odds_estimate}")
-            print(f"   💬 {sp.reasoning}")
-            print()
-
-    # Summary
-    print("📋 BETTING SUMMARY:")
-    print("-" * 20)
-    s = analysis.summary
-    print(f"Total Recommendations: {s['total_recommendations']}")
-    print(f"High Confidence:       {s['high_confidence']}")
-    print(f"Medium Confidence:     {s['medium_confidence']}")
-    print(f"🎯 Most Likely Score: {s.get('most_likely_score', 'N/A')}")
-    print(f"🏆 Top Pick:          {s.get('top_pick', 'N/A')}")
-
-
-def _render_rec(rec, confidence_emoji: str):
-    prob_emoji = "✅" if rec.percentage >= 75 else "📊" if rec.percentage >= 60 else "❗"
-    print(f"│   {confidence_emoji} {rec.market}: {rec.selection}")
-    if rec.real_odds and rec.bookmaker:
-        print(f"│      💎 Quota: {rec.real_odds:.2f} ({rec.bookmaker}) • {prob_emoji} {rec.percentage:.1f}%")
-        if rec.edge is not None:
-            edge_sign = "+" if rec.edge >= 0 else ""
-            verdict_emoji = "✅" if rec.verdict == "BET" else "⚡" if rec.verdict == "VALUE" else "❌"
-            kelly_pct = (rec.kelly_quarter or 0) * 100
-            print(
-                f"│      📈 Edge: {edge_sign}{rec.edge*100:.1f}%"
-                f" • EV: {'+' if (rec.ev_percent or 0) >= 0 else ''}{rec.ev_percent:.1f}%"
-                f" • Kelly ¼: {kelly_pct:.1f}% bankroll"
-                f"  {verdict_emoji} {rec.verdict}"
-            )
-    else:
-        print(f"│      {prob_emoji} {rec.percentage:.1f}% • ❌ Quote non disponibili")
-    print(f"│      💬 {rec.reasoning}")
-    print("│")
-
-
-# ── player cards ──────────────────────────────────────────────────────────────
-
-async def display_player_cards_picks(
-    fixture, prediction, player_card_analyzer, api_client,
-    league_id, season, league_name="Unknown League"
-):
-    """Display top player cards picks for a match."""
-    try:
-        from analyzers.player_cards_analyzer import PlayerCardsAnalyzer
-        analyzer = PlayerCardsAnalyzer()
-        picks = await analyzer.analyze_match_players(fixture, [], league_name, api_client)
-        if not picks:
-            return
-
-        top_picks = picks[:5]
-        if not top_picks:
-            return
-
-        print(f"\n🟨 TOP {len(top_picks)} GIOCATORI A RISCHIO AMMONIZIONE:")
-        print("═" * 60)
-
-        for i, pick in enumerate(top_picks, 1):
-            conf_emoji = "🔥" if pick.confidence == "HIGH" else "⚡" if pick.confidence == "MEDIUM" else "💡"
-            player_name = pick.market.replace("Player Card - ", "")
-            team_name = pick.player_team if pick.player_team else ""
-            pct_color = "🔴" if pick.percentage >= 75 else "🟠" if pick.percentage >= 60 else "🟡"
-            print(f" {i}. {conf_emoji} {player_name}")
-            if team_name:
-                print(f"    🏟️  {team_name}")
-            print(f"    💰 {pick.odds_range} • {pct_color} {pick.percentage:.1f}%")
-            print(f"    💬 {pick.reasoning}")
-            print()
-
-        print("─" * 60)
-
-    except Exception as exc:
-        print(f"⚠️  Player cards analysis unavailable: {exc}")
+async def display_player_cards_picks(*args, **kwargs):
+    """Backward-compatible wrapper around cli.player_cards_display."""
+    return await _display_player_cards(*args, **kwargs)
 
 
 # ── player predictions (legacy) ───────────────────────────────────────────────

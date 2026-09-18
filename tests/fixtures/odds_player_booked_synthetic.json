@@ -1,0 +1,87 @@
+{
+ "_meta": {
+  "synthetic": true,
+  "note": "NO REAL PAYLOAD: bet 102/251 returned 0 results pre-match on 3 Serie A fixtures. Shape modelled on the real bet 266 'Player Fouls Committed' (value 'Name - N') and on the API's standard {id,name,values:[{value,odd}]}."
+ },
+ "response": [
+  {
+   "fixture": {
+    "id": 900001
+   },
+   "bookmakers": [
+    {
+     "id": 8,
+     "name": "Bet365",
+     "bets": [
+      {
+       "id": 102,
+       "name": "Player to be booked",
+       "values": [
+        {
+         "value": "Lautaro Martínez - Yes",
+         "odd": "4.50"
+        },
+        {
+         "value": "Lautaro Martínez - No",
+         "odd": "1.20"
+        },
+        {
+         "value": "Federico Dimarco - Yes",
+         "odd": "3.10"
+        },
+        {
+         "value": "Nicolò Barella - Yes",
+         "odd": "2.75"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 6,
+     "name": "Bwin",
+     "bets": [
+      {
+       "id": 102,
+       "name": "Player to be booked",
+       "values": [
+        {
+         "value": "Lautaro Martínez - Yes",
+         "odd": "4.75"
+        },
+        {
+         "value": "Federico Dimarco - Yes",
+         "odd": "3.30"
+        },
+        {
+         "value": "Stefan de Vrij - Yes",
+         "odd": "5.00"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 11,
+     "name": "1xBet",
+     "bets": [
+      {
+       "id": 102,
+       "name": "Player to be booked",
+       "values": [
+        {
+         "value": "Stefan de Vrij - Yes",
+         "odd": "5.50"
+        },
+        {
+         "value": "Hakan Çalhanoğlu - Yes",
+         "odd": "3.60"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

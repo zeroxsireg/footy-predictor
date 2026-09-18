@@ -1,312 +1,213 @@
 """
-Odds Fetcher Module - Gestisce il recupero delle quote da tutti i bookmaker disponibili.
+Odds Fetcher Module - Gestisce il recupero delle quote dai bookmaker.
 
 Questo modulo:
-1. Fetcha le quote da TUTTI i bookmaker disponibili (non solo Bet365)
-2. Mappa automaticamente i nostri mercati ai bet IDs delle API
-3. Trova le migliori quote disponibili per ogni pick
-4. Cache intelligente per ridurre le chiamate API
+1. Fetcha le quote da tutti i bookmaker disponibili
+2. Assegna la quota secondo la priorita' Bet365 > Bwin > William Hill > Betfair
+   (fallback al primo bookmaker disponibile solo se nessuno dei 4 quota il mercato)
+3. Mappa i mercati ai bet id verificati (core/odds_markets.py, SSOT); nessun id = nessuna quota
+4. Cache TTL 600s con degrado offline (core/odds_cache.py)
 """
 
 import asyncio
-from typing import Dict, List, Optional, Tuple
-from dataclasses import dataclass
-from datetime import datetime, timedelta
+import re
+from datetime import datetime
+from typing import Dict, List, Optional, Set, Tuple
 
 from adapters.odds_api import OddsAPIClient
 from core.config import get_settings
+from core.odds_cache import OddsCache
+from core.odds_markets import (
+    BATCH_PAUSE_SECONDS, BATCH_SIZE, BOOKMAKER_PRIORITY, ODDS_CACHE_TTL,
+    parse_player_card_market, resolve_bet_id, split_team_market,
+)
+from core.odds_names import normalize_player_name
+from core.odds_player_booked import PlayerBookedOddsMixin
+from core.odds_types import MarketOdds
 from utils.redis_cache import get_redis_cache
 
+__all__ = ["OddsFetcher", "MarketOdds"]
 
-@dataclass
-class MarketOdds:
-    """Quote per un mercato specifico."""
-    bookmaker_name: str
-    bookmaker_id: int
-    market: str
-    selection: str
-    odds: float
-    last_update: datetime
+_DEFAULT_REDIS = object()
 
 
-class OddsFetcher:
+class OddsFetcher(PlayerBookedOddsMixin):
     """
     Fetcher per le quote dei bookmaker.
-    
-    Strategia:
-    - Cerca quote su TUTTI i bookmaker disponibili
-    - Preferisce Bet365, ma usa qualsiasi bookmaker abbia il mercato
-    - Cache Redis per ridurre chiamate API
-    - Mapping automatico tra i nostri mercati e i bet IDs API
+
+    - La quota di un pick segue BOOKMAKER_PRIORITY e traccia il bookmaker reale
+    - Il confronto con la miglior quota di mercato resta solo informativo
+    - Mercati senza bet id verificato (es. tiri per squadra) -> None, un warning per run
     """
-    
-    def __init__(self):
-        self.settings = get_settings()
-        self.odds_client = OddsAPIClient()
-        self.redis_cache = get_redis_cache()
-        
-        # TTL cache: 10 minuti (le quote cambiano frequentemente)
-        self.cache_ttl = 600
-        
-        # Bookmaker prioritari (ma non esclusivi)
-        self.preferred_bookmakers = [8, 6, 5, 3]  # Bet365, Bwin, William Hill, Betfair
-        
-        # Mapping COMPLETO tra i nostri mercati e i bet IDs delle API
-        # Questi sono i bet IDs standard di api-football
-        self.bet_id_mapping = {
-            # Match Winner / Result (bet_id: 1)
-            "match_winner": 1,
-            "1x2": 1,
-            
-            # Goals Over/Under (bet_id: 5)
-            "goals_over_under": 5,
-            "match_goals": 5,
-            
-            # Both Teams Score (bet_id: 8)
-            "btts": 8,
-            "both_teams_to_score": 8,
-            
-            # Exact Score (bet_id: 6)
-            "correct_score": 6,
-            "exact_score": 6,
-            
-            # Double Chance (bet_id: 7)
-            "double_chance": 7,
-            
-            # Total Corners (bet_id: 12)
-            "corners": 12,
-            "total_corners": 12,
-            
-            # Total Cards (bet_id: 11)
-            "cards": 11,
-            "total_cards": 11,
-            
-            # Total Shots (non sempre disponibile)
-            "total_shots": None,  # Spesso non disponibile
-            
-            # Team Goals
-            "home_team_goals": None,
-            "away_team_goals": None,
-        }
-    
+
+    def __init__(self, odds_client=None, redis_cache=_DEFAULT_REDIS):
+        """`redis_cache=None` disables Redis (memory-only); default = shared Redis singleton."""
+        self.settings = get_settings() if odds_client is None else None
+        self.odds_client = odds_client or OddsAPIClient()
+        self.redis_cache = get_redis_cache() if redis_cache is _DEFAULT_REDIS else redis_cache
+        self._cache = OddsCache(self.redis_cache, ODDS_CACHE_TTL)
+        self.cache_ttl = ODDS_CACHE_TTL
+        self.preferred_bookmakers = list(BOOKMAKER_PRIORITY)
+        self._warned: Set[str] = set()
+        self._fixture_teams: Dict[int, Tuple[str, str]] = {}
+
     async def initialize(self):
         """Inizializza il fetcher recuperando bookmaker e bet disponibili."""
         try:
-            # Recupera tutti i bookmaker disponibili (silent mode)
-            bookmakers = await self.odds_client.get_bookmakers()
-            
-            # Recupera tutti i bet disponibili (silent mode)
-            bets = await self.odds_client.get_available_bets()
-            
+            await self.odds_client.get_bookmakers()
+            await self.odds_client.get_available_bets()
             print("✅ Odds Fetcher pronto!")
             return True
-            
         except Exception as e:
             print(f"⚠️ Errore durante l'inizializzazione: {e}")
             return False
-    
+
+    def _warn_once(self, key: str, message: str) -> None:
+        """Print a warning only the first time `key` is seen in this run."""
+        if key not in self._warned:
+            self._warned.add(key)
+            print(message)
+
+    async def _resolve_side(self, fixture_id: int, team_name: str) -> Optional[str]:
+        """Return "home"/"away" for `team_name` in the fixture (1 cached API call)."""
+        if fixture_id not in self._fixture_teams:
+            try:
+                teams = await self.odds_client.get_fixture_teams(fixture_id)
+            except Exception as exc:
+                print(f"⚠️ Squadre fixture {fixture_id} non recuperabili: {exc}")
+                return None
+            if not teams:
+                return None
+            self._fixture_teams[fixture_id] = teams
+        home, away = self._fixture_teams[fixture_id]
+        target = normalize_player_name(team_name)
+        if target == normalize_player_name(home):
+            return "home"
+        if target == normalize_player_name(away):
+            return "away"
+        return None
+
     async def get_odds_for_market(self, fixture_id: int, market: str, selection: str) -> Optional[MarketOdds]:
         """
-        Recupera le quote per un mercato specifico.
-        
-        Args:
-            fixture_id: ID della partita
-            market: Nome del mercato (es. "Match Goals", "Both Teams to Score")
-            selection: Selezione specifica (es. "Over 2.5", "Yes")
-        
+        Recupera la quota per un mercato specifico.
+
         Returns:
-            MarketOdds con le migliori quote trovate, o None se non disponibili
+            MarketOdds (un solo bookmaker, per priorita') o None se non disponibile
         """
-        # Controlla cache
+        player_name = parse_player_card_market(market)
+        if player_name is not None:
+            return await self.get_player_booked_quote(fixture_id, player_name)
+
         cache_key = f"odds:{fixture_id}:{market}:{selection}"
-        cached = await self.redis_cache.get_data(cache_key)
-        
-        if cached:
-            # Ricostruisci MarketOdds da dict
-            if isinstance(cached, dict):
-                cached['last_update'] = datetime.fromisoformat(cached['last_update']) if isinstance(cached.get('last_update'), str) else datetime.now()
-                return MarketOdds(**cached)
-            return None
-        
-        # Determina il bet_id dalle API
-        bet_id = self._get_bet_id_for_market(market)
-        
+        cached = await self._cache.get(cache_key)
+        if cached is not self._cache.MISS and isinstance(cached, dict):
+            return MarketOdds(**{**cached, "last_update": datetime.fromisoformat(cached["last_update"])})
+
+        side = None
+        team_market = split_team_market(market)
+        if team_market is not None:
+            side = await self._resolve_side(fixture_id, team_market[0])
+        bet_id = self._get_bet_id_for_market(market, side)
         if not bet_id:
-            print(f"⚠️ Bet ID non trovato per mercato: {market}")
+            kind = f"team {team_market[1]}" if team_market else market
+            self._warn_once(f"nobet:{kind}", f"⚠️ Nessun bet id verificato per mercato: {kind} (nessuna quota)")
             return None
-        
+
         try:
-            # Cerca quote su TUTTI i bookmaker (prima i preferiti, poi gli altri)
-            odds_result = await self._fetch_from_bookmakers(fixture_id, bet_id, selection)
-            
-            if not odds_result:
-                # Debug: nessuna quota trovata
-                print(f"   ⚠️  Nessuna quota disponibile per {market}: {selection} (fixture {fixture_id})")
-            
-            if odds_result:
-                market_odds = MarketOdds(
-                    bookmaker_name=odds_result[0],
-                    bookmaker_id=odds_result[1],
-                    market=market,
-                    selection=selection,
-                    odds=odds_result[2],
-                    last_update=datetime.now()
-                )
-                
-                # Cache il risultato
-                await self.redis_cache.set_data(
-                    cache_key,
-                    {
-                        "bookmaker_name": market_odds.bookmaker_name,
-                        "bookmaker_id": market_odds.bookmaker_id,
-                        "market": market_odds.market,
-                        "selection": market_odds.selection,
-                        "odds": market_odds.odds,
-                        "last_update": market_odds.last_update.isoformat()
-                    },
-                    ttl_type="live_odds"  # Usa il TTL predefinito per live_odds (30 min)
-                )
-                
-                return market_odds
-            
-            return None
-            
+            result = await self._fetch_from_bookmakers(fixture_id, bet_id, selection)
         except Exception as e:
             print(f"⚠️ Errore recupero quote per {market} - {selection}: {e}")
             return None
-    
+        if not result:
+            print(f"   ⚠️  Nessuna quota disponibile per {market}: {selection} (fixture {fixture_id})")
+            return None
+
+        market_odds = MarketOdds(
+            bookmaker_name=result[0], bookmaker_id=result[1], market=market,
+            selection=selection, odds=result[2], last_update=datetime.now(),
+        )
+        await self._cache.set(cache_key, {**market_odds.__dict__, "last_update": market_odds.last_update.isoformat()})
+        return market_odds
+
     async def get_odds_for_multiple_picks(self, fixture_id: int, picks: List[Tuple[str, str]]) -> Dict[str, Optional[MarketOdds]]:
-        """
-        Recupera quote per multipli picks in parallelo.
-        
-        Args:
-            fixture_id: ID della partita
-            picks: Lista di tuple (market, selection)
-        
-        Returns:
-            Dizionario con chiave "market:selection" e valore MarketOdds
-        """
+        """Recupera quote per piu' picks: max BATCH_SIZE richieste alla volta, con pausa tra batch."""
         print(f"\n💰 Recupero quote per {len(picks)} mercati...")
-        
-        # Crea task paralleli per tutti i picks
-        tasks = []
-        for market, selection in picks:
-            task = self.get_odds_for_market(fixture_id, market, selection)
-            tasks.append((f"{market}:{selection}", task))
-        
-        # Esegui in parallelo con rate limiting
-        results = {}
-        batch_size = 5  # 5 richieste alla volta per non sovraccaricare l'API
-        
-        for i in range(0, len(tasks), batch_size):
-            batch = tasks[i:i + batch_size]
+        tasks = [(f"{m}:{s}", self.get_odds_for_market(fixture_id, m, s)) for m, s in picks]
+        results: Dict[str, Optional[MarketOdds]] = {}
+
+        for i in range(0, len(tasks), BATCH_SIZE):
+            batch = tasks[i:i + BATCH_SIZE]
             batch_results = await asyncio.gather(*[task for _, task in batch], return_exceptions=True)
-            
             for (key, _), result in zip(batch, batch_results):
                 if isinstance(result, Exception):
                     print(f"⚠️ Errore per {key}: {result}")
                     results[key] = None
                 else:
                     results[key] = result
-            
-            # Rate limiting tra batch
-            if i + batch_size < len(tasks):
-                await asyncio.sleep(0.5)
-        
-        # Ritorna risultati (silent mode)
+            if i + BATCH_SIZE < len(tasks):
+                await asyncio.sleep(BATCH_PAUSE_SECONDS)
         return results
-    
+
+    @staticmethod
+    def _bookmaker_rank(bookmaker_id: int) -> int:
+        try:
+            return BOOKMAKER_PRIORITY.index(bookmaker_id)
+        except ValueError:
+            return len(BOOKMAKER_PRIORITY)
+
     async def _fetch_from_bookmakers(self, fixture_id: int, bet_id: int, selection: str) -> Optional[Tuple[str, int, float]]:
         """
+        Fetcha le quote e ritorna quella del bookmaker a priorita' piu' alta.
 
+        Priorita' Bet365 > Bwin > William Hill > Betfair; se nessuno dei 4 quota
+        la selezione, il primo bookmaker disponibile nel payload. La miglior
+        quota di mercato e' solo informativa (log).
 
-
-
-n        Fetcha quote da TUTTI i bookmaker e ritorna la MIGLIORE.
-        
         Returns:
-            Tuple (bookmaker_name, bookmaker_id, best_odds) o None
+            Tuple (bookmaker_name, bookmaker_id, odds) o None
         """
-        all_odds = []  # Lista di tuple (bookmaker_name, bookmaker_id, odds)
-        
-        try:
-            # Richiedi quote da TUTTI i bookmaker in una volta
-            fixture_odds = await self.odds_client.get_fixture_odds(
-                fixture_id=fixture_id,
-                bet_ids=[bet_id],
-                bookmaker_ids=None  # TUTTI i bookmaker
-            )
-            
-            if fixture_odds and fixture_odds.bookmakers:
-                # Raccogli TUTTE le quote disponibili
-                for bookmaker_odds in fixture_odds.bookmakers:
-                    for value in bookmaker_odds.values:
-                        if self._match_selection(value.get("value", ""), selection):
-                            odds_value = float(value.get("odd", 0))
-                            if odds_value > 0:  # Validazione
-                                all_odds.append((
-                                    bookmaker_odds.bookmaker_name,
-                                    bookmaker_odds.bookmaker_id,
-                                    odds_value
-                                ))
-                
-                if all_odds:
-                    # Ordina per quota (più alta = migliore per lo scommettitore)
-                    all_odds.sort(key=lambda x: x[2], reverse=True)
-                    
-                    best = all_odds[0]
-                    
-                    # Se ci sono più bookmaker, mostra confronto
-                    if len(all_odds) > 1:
-                        other_books = [f"{bm}:{odd:.2f}" for bm, _, odd in all_odds[1:4]]
-                        comparison = ", ".join(other_books)
-                        print(f"   💎 BEST: {best[0]}:{best[2]:.2f} (vs {comparison})")
-                    
-                    return best
-        
-        except Exception as e:
-            print(f"⚠️ Errore fetch bookmaker: {e}")
-        
-        return None
-    
-    def _get_bet_id_for_market(self, market: str) -> Optional[int]:
+        fixture_odds = await self.odds_client.get_fixture_odds(
+            fixture_id=fixture_id, bet_ids=[bet_id], bookmaker_ids=None
+        )
+        if not fixture_odds or not fixture_odds.bookmakers:
+            return None
+
+        quotes: List[Tuple[str, int, float]] = []
+        for bookmaker_odds in fixture_odds.bookmakers:
+            for value in bookmaker_odds.values:
+                if not self._match_selection(value.get("value", ""), selection):
+                    continue
+                try:
+                    odds_value = float(value.get("odd", 0))
+                except (TypeError, ValueError):
+                    continue
+                if odds_value > 0:
+                    quotes.append((bookmaker_odds.bookmaker_name, bookmaker_odds.bookmaker_id, odds_value))
+                    break  # one quote per bookmaker for this selection
+        if not quotes:
+            return None
+
+        # sorted() is stable: ties keep payload order, so the fallback is "first available".
+        chosen = sorted(quotes, key=lambda q: self._bookmaker_rank(q[1]))[0]
+        market_best = max(quotes, key=lambda q: q[2])
+        if market_best[1] != chosen[1]:
+            print(f"   ℹ️  Quota assegnata {chosen[0]}:{chosen[2]:.2f} (miglior quota mercato: {market_best[0]}:{market_best[2]:.2f})")
+        return chosen
+
+    def _get_bet_id_for_market(self, market: str, side: Optional[str] = None) -> Optional[int]:
         """
-        Mappa il nome del nostro mercato al bet_id delle API.
-        
+        Mappa il nome del nostro mercato al bet_id verificato (core/odds_markets.py).
+
         Args:
-            market: Nome del mercato (es. "Match Goals", "Both Teams to Score")
-        
+            market: es. "Match Goals", "Inter Corners", "Player Card - L. Martinez"
+            side: "home"/"away" = lato della squadra nei mercati per-squadra
+
         Returns:
-            bet_id delle API o None
+            bet_id oppure None (mercati per-squadra senza side, mercati giocatore,
+            mercati senza bet id come i tiri per squadra)
         """
-        market_lower = market.lower()
-        
-        # Match esatto
-        if market_lower in self.bet_id_mapping:
-            return self.bet_id_mapping[market_lower]
-        
-        # Match parziale
-        if "goal" in market_lower and ("over" in market_lower or "under" in market_lower or "match" in market_lower):
-            return 5  # Goals Over/Under
-        
-        if "btts" in market_lower or "both teams" in market_lower:
-            return 8  # BTTS
-        
-        if "result" in market_lower or "winner" in market_lower or "1x2" in market_lower:
-            return 1  # Match Winner
-        
-        if "corner" in market_lower:
-            return 12  # Corners
-        
-        if "card" in market_lower:
-            return 11  # Cards
-        
-        if "score" in market_lower and "exact" in market_lower:
-            return 6  # Exact Score
-        
-        # Non trovato
-        return None
-    
+        return resolve_bet_id(market, side)
+
     def _match_selection(self, api_value: str, our_selection: str) -> bool:
         """
         Verifica se il valore dell'API corrisponde alla nostra selezione.
@@ -356,125 +257,36 @@ n        Fetcha quote da TUTTI i bookmaker e ritorna la MIGLIORE.
     
     def _extract_number(self, text: str) -> Optional[float]:
         """Estrae il numero da una stringa."""
-        import re
         match = re.search(r'\d+\.?\d*', text)
         if match:
             return float(match.group())
         return None
     
     async def get_all_odds_for_fixture(self, fixture_id: int) -> Dict[str, List[MarketOdds]]:
-        """
-        Recupera TUTTE le quote disponibili per una partita.
-        Utile per esplorare quali mercati sono disponibili.
-        
-        Returns:
-            Dizionario con mercato -> lista di quote da diversi bookmaker
-        """
+        """Recupera le quote dei mercati principali (esplorazione): mercato -> quote per bookmaker."""
         print(f"\n🔍 Recupero tutte le quote per fixture {fixture_id}...")
-        
-        all_odds = {}
-        
-        # Prova i principali bet IDs
-        main_bets = [1, 5, 8, 6, 11, 12]  # Winner, Goals, BTTS, Score, Cards, Corners
-        
+        all_odds: Dict[str, List[MarketOdds]] = {}
+        main_bets = [1, 5, 8, 10, 80, 45]  # Winner, Goals, BTTS, Score, Cards, Corners
+
         for bet_id in main_bets:
             try:
-                fixture_odds = await self.odds_client.get_fixture_odds(
-                    fixture_id=fixture_id,
-                    bet_ids=[bet_id]
-                )
-                
-                if fixture_odds and fixture_odds.bookmakers:
-                    for bookmaker_odds in fixture_odds.bookmakers:
-                        market_key = bookmaker_odds.bet_name
-                        
-                        if market_key not in all_odds:
-                            all_odds[market_key] = []
-                        
-                        for value in bookmaker_odds.values:
-                            market_odds = MarketOdds(
-                                bookmaker_name=bookmaker_odds.bookmaker_name,
-                                bookmaker_id=bookmaker_odds.bookmaker_id,
-                                market=bookmaker_odds.bet_name,
-                                selection=value.get("value", ""),
-                                odds=float(value.get("odd", 0)),
-                                last_update=datetime.now()
-                            )
-                            all_odds[market_key].append(market_odds)
-                
-                # Rate limiting
-                await asyncio.sleep(0.3)
-                
-            except Exception as e:
+                fixture_odds = await self.odds_client.get_fixture_odds(fixture_id=fixture_id, bet_ids=[bet_id])
+                for bm in (fixture_odds.bookmakers if fixture_odds else []):
+                    bucket = all_odds.setdefault(bm.bet_name, [])
+                    for value in bm.values:
+                        bucket.append(MarketOdds(
+                            bookmaker_name=bm.bookmaker_name, bookmaker_id=bm.bookmaker_id,
+                            market=bm.bet_name, selection=value.get("value", ""),
+                            odds=float(value.get("odd", 0)), last_update=datetime.now(),
+                        ))
+                await asyncio.sleep(BATCH_PAUSE_SECONDS / 3)
+            except Exception:
                 continue
-        
+
         print(f"✅ Trovati {len(all_odds)} mercati con quote")
         return all_odds
-    
+
     def clear_cache(self):
-        """Pulisce la cache delle quote."""
-        # Redis cache è gestita automaticamente con TTL
+        """Svuota la cache in-process (le entry Redis scadono da sole dopo il TTL)."""
+        self._cache._memory.clear()
         print("🧹 Cache quote pulita")
-
-
-# ===== FUNZIONI DI TEST =====
-
-async def test_odds_fetcher():
-    """Testa il modulo OddsFetcher."""
-    print("=" * 70)
-    print("🧪 TEST ODDS FETCHER")
-    print("=" * 70)
-    
-    fetcher = OddsFetcher()
-    await fetcher.initialize()
-    
-    # Test con una partita reale (usa un fixture_id reale)
-    # Esempio: AS Roma vs Inter
-    test_fixture_id = 1234567  # Sostituisci con ID reale
-    
-    print("\n" + "=" * 70)
-    print("📊 TEST 1: Recupero quote singolo mercato")
-    print("=" * 70)
-    
-    odds = await fetcher.get_odds_for_market(
-        fixture_id=test_fixture_id,
-        market="Match Goals",
-        selection="Over 2.5"
-    )
-    
-    if odds:
-        print(f"✅ Quote trovate:")
-        print(f"   Bookmaker: {odds.bookmaker_name}")
-        print(f"   Market: {odds.market}")
-        print(f"   Selection: {odds.selection}")
-        print(f"   Odds: {odds.odds}")
-    else:
-        print("❌ Nessuna quota trovata")
-    
-    print("\n" + "=" * 70)
-    print("📊 TEST 2: Recupero quote multiple")
-    print("=" * 70)
-    
-    picks = [
-        ("Match Goals", "Over 2.5"),
-        ("Both Teams to Score", "Yes"),
-        ("Match Result", "Home Win"),
-        ("Total Corners", "Over 9.5"),
-    ]
-    
-    results = await fetcher.get_odds_for_multiple_picks(test_fixture_id, picks)
-    
-    for key, odds in results.items():
-        if odds:
-            print(f"✅ {key}: {odds.odds} ({odds.bookmaker_name})")
-        else:
-            print(f"❌ {key}: Non disponibile")
-    
-    print("\n" + "=" * 70)
-    print("✅ TEST COMPLETATO")
-    print("=" * 70)
-
-
-if __name__ == "__main__":
-    asyncio.run(test_odds_fetcher())
-

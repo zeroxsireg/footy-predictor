@@ -287,3 +287,13 @@ END;
 -- 4. Gli indici su confidence DESC permettono TOP N queries veloci
 -- 5. Status field permette di disabilitare tips senza eliminarli
 
+
+-- =====================================================
+-- CACHE API LOCALE (sostituisce Redis, vedi utils/sqlite_cache.py)
+-- Le istruzioni tra i marker sono lette da database/cache_sql.py (SSOT).
+-- expires_at NULL = non scade mai; formato 'YYYY-MM-DD HH:MM:SS' UTC.
+-- =====================================================
+-- BEGIN api_cache
+CREATE TABLE IF NOT EXISTS api_cache (key TEXT PRIMARY KEY, value TEXT NOT NULL, ttl_type TEXT, expires_at TIMESTAMP, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);
+CREATE INDEX IF NOT EXISTS idx_api_cache_expires ON api_cache(expires_at);
+-- END api_cache

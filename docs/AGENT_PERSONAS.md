@@ -55,7 +55,7 @@ chi supervisiona (umano o agente di regia) deve trasmetterle esplicitamente.
    - Fattore campo globale di lega calibrato.
    - **Shrinkage bayesiano** ($k$) verso la media della lega, che evita di sovra-stimare squadre
      in serie positive effimere o neopromosse con poche partite. Questo assetto raggiunge un
-     **Ranked Probability Score (RPS) di ~0.19–0.21**, competitivo con la letteratura scientifica di punta.
+     **Ranked Probability Score (RPS) di ~0.19–0.21**, in linea con la letteratura, ma resta **peggiore del mercato** (RPS pooled 0.2000 contro 0.1956 delle quote di chiusura Bet365 de-viggate, 1760 partite; vedi `backtest/README.md`).
 
 4. **De-vigging e rimozione dell'Overround prima di calcolare l'Edge**:
    Una quota decimale offerta dal bookmaker non rappresenta una probabilità pura, ma include l'aggio (vig/overround):
@@ -192,7 +192,7 @@ metriche di probabilità (RPS, Brier, Brier Skill Score, calibration curves).
    strette e sottostima gli esiti estremi. Non promuovere picks O/U senza shrinkage o correzioni xG.
 2. Singolarità di Inizio Campionato: nelle prime 3-5 giornate, modelli non regolarizzati collassano
    su stime estreme. L'introduzione dello shrinkage bayesiano e dell'eredità multi-stagione ha
-   stabilizzato l'RPS riducendo la varianza dell'errore del 18%.
+   stabilizzato l'RPS (la stima "-18% di varianza" citata in passato non è riproducibile dagli script del repo).
 3. Data Leakage latente nelle medie casa/trasferta: includere il risultato del match in corso nel
    calcolo della media "casa" prima del fischio d'inizio distorceva il backtest verso performance
    miracolistiche inesistenti. L'invariante `snapshot -> predict -> update` ha eliminato il problema.
@@ -310,7 +310,7 @@ Brier score optimization e mitigazione del drawdown di portafoglio.
 
 1. Rovina da Over-Betting con Full Kelly: simulazioni su stagioni reali hanno mostrato che il Full Kelly,
    anche con un modello con RPS eccellente, subisce drawdown $> 60\%$ durante serie statisticamente
-   inevitabili di 5-7 scommesse perse. L'adozione del Quarter Kelly ha abbattuto il max drawdown sotto il 15%.
+   inevitabili di 5-7 scommesse perse. Il Quarter Kelly riduce il drawdown rispetto al Full Kelly, ma non lo elimina: `run_bankroll.py --season 2025 --edge 0.05` (verificato il 2026-09-18) dà drawdown massimi del 70-80% con un modello senza edge; la soglia "sotto il 15%" citata in passato non è riproducibile.
 2. Falsi positivi su quote alte (Longshot Bias): modelli lineari tendevano a vedere edge spropositato
    su quote 8.00 o 10.00 con probabilità stimata del 15% vs 10% del bookmaker. Introdotto un filtro di
    robustezza e penalità sulla coda lunga per evitare trappole di varianza.

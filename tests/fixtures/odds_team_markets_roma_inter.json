@@ -1,0 +1,499 @@
+{
+ "_meta": {
+  "source": "API-Football /odds?fixture=1550128 (AS Roma - Inter, 2026-09-19), reduced",
+  "bets": "real ids"
+ },
+ "response": [
+  {
+   "fixture": {
+    "id": 1550128
+   },
+   "bookmakers": [
+    {
+     "id": 8,
+     "name": "Bet365",
+     "bets": [
+      {
+       "id": 5,
+       "name": "Goals Over/Under",
+       "values": [
+        {
+         "value": "Over 1.5",
+         "odd": "1.20"
+        },
+        {
+         "value": "Under 1.5",
+         "odd": "4.50"
+        },
+        {
+         "value": "Over 2.5",
+         "odd": "1.62"
+        },
+        {
+         "value": "Under 2.5",
+         "odd": "2.30"
+        },
+        {
+         "value": "Over 3.5",
+         "odd": "2.50"
+        },
+        {
+         "value": "Under 3.5",
+         "odd": "1.53"
+        }
+       ]
+      },
+      {
+       "id": 16,
+       "name": "Total - Home",
+       "values": [
+        {
+         "value": "Over 1.5",
+         "odd": "2.10"
+        },
+        {
+         "value": "Under 1.5",
+         "odd": "1.67"
+        },
+        {
+         "value": "Over 2.5",
+         "odd": "4.50"
+        },
+        {
+         "value": "Under 2.5",
+         "odd": "1.18"
+        },
+        {
+         "value": "Over 3.5",
+         "odd": "13.00"
+        },
+        {
+         "value": "Under 3.5",
+         "odd": "1.04"
+        }
+       ]
+      },
+      {
+       "id": 17,
+       "name": "Total - Away",
+       "values": [
+        {
+         "value": "Over 1.5",
+         "odd": "2.00"
+        },
+        {
+         "value": "Under 1.5",
+         "odd": "1.73"
+        },
+        {
+         "value": "Over 2.5",
+         "odd": "4.33"
+        },
+        {
+         "value": "Under 2.5",
+         "odd": "1.20"
+        },
+        {
+         "value": "Over 3.5",
+         "odd": "11.00"
+        },
+        {
+         "value": "Under 3.5",
+         "odd": "1.05"
+        }
+       ]
+      },
+      {
+       "id": 45,
+       "name": "Corners Over Under",
+       "values": [
+        {
+         "value": "Over 8.5",
+         "odd": "1.73"
+        },
+        {
+         "value": "Under 8.5",
+         "odd": "2.00"
+        },
+        {
+         "value": "Over 9",
+         "odd": "2.00"
+        },
+        {
+         "value": "Under 9",
+         "odd": "1.80"
+        }
+       ]
+      },
+      {
+       "id": 57,
+       "name": "Home Corners Over/Under",
+       "values": [
+        {
+         "value": "Over 4.5",
+         "odd": "1.91"
+        },
+        {
+         "value": "Under 4.5",
+         "odd": "1.80"
+        }
+       ]
+      },
+      {
+       "id": 58,
+       "name": "Away Corners Over/Under",
+       "values": [
+        {
+         "value": "Over 4.5",
+         "odd": "2.20"
+        },
+        {
+         "value": "Under 4.5",
+         "odd": "1.62"
+        }
+       ]
+      },
+      {
+       "id": 80,
+       "name": "Cards Over/Under",
+       "values": [
+        {
+         "value": "Over 3.5",
+         "odd": "1.73"
+        },
+        {
+         "value": "Under 3.5",
+         "odd": "2.00"
+        },
+        {
+         "value": "Over 4.5",
+         "odd": "2.20"
+        },
+        {
+         "value": "Under 4.5",
+         "odd": "1.62"
+        }
+       ]
+      },
+      {
+       "id": 82,
+       "name": "Home Team Total Cards",
+       "values": [
+        {
+         "value": "Over 2.5",
+         "odd": "2.50"
+        },
+        {
+         "value": "Under 2.5",
+         "odd": "1.50"
+        }
+       ]
+      },
+      {
+       "id": 83,
+       "name": "Away Team Total Cards",
+       "values": [
+        {
+         "value": "Over 1.5",
+         "odd": "1.50"
+        },
+        {
+         "value": "Under 1.5",
+         "odd": "2.50"
+        }
+       ]
+      },
+      {
+       "id": 87,
+       "name": "Total ShotOnGoal",
+       "values": [
+        {
+         "value": "Over 8.5",
+         "odd": "1.73"
+        },
+        {
+         "value": "Under 8.5",
+         "odd": "2.00"
+        }
+       ]
+      },
+      {
+       "id": 211,
+       "name": "Total Shots",
+       "values": [
+        {
+         "value": "Over 26.5",
+         "odd": "1.80"
+        },
+        {
+         "value": "Under 26.5",
+         "odd": "1.91"
+        },
+        {
+         "value": "Over 24.5",
+         "odd": "1.83"
+        },
+        {
+         "value": "Under 24.5",
+         "odd": "1.83"
+        },
+        {
+         "value": "Over 25.5",
+         "odd": "1.73"
+        },
+        {
+         "value": "Under 25.5",
+         "odd": "2.00"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 4,
+     "name": "Pinnacle",
+     "bets": [
+      {
+       "id": 45,
+       "name": "Corners Over Under",
+       "values": [
+        {
+         "value": "Over 8",
+         "odd": "1.48"
+        },
+        {
+         "value": "Under 8",
+         "odd": "2.57"
+        },
+        {
+         "value": "Over 8.5",
+         "odd": "1.68"
+        },
+        {
+         "value": "Under 8.5",
+         "odd": "2.16"
+        },
+        {
+         "value": "Over 9",
+         "odd": "1.89"
+        },
+        {
+         "value": "Under 9",
+         "odd": "1.93"
+        }
+       ]
+      },
+      {
+       "id": 80,
+       "name": "Cards Over/Under",
+       "values": [
+        {
+         "value": "Over 2.5",
+         "odd": "1.32"
+        },
+        {
+         "value": "Under 2.5",
+         "odd": "3.21"
+        },
+        {
+         "value": "Over 3.5",
+         "odd": "1.58"
+        },
+        {
+         "value": "Under 3.5",
+         "odd": "2.33"
+        },
+        {
+         "value": "Over 3.0",
+         "odd": "1.33"
+        },
+        {
+         "value": "Under 3.0",
+         "odd": "3.14"
+        }
+       ]
+      }
+     ]
+    },
+    {
+     "id": 11,
+     "name": "1xBet",
+     "bets": [
+      {
+       "id": 45,
+       "name": "Corners Over Under",
+       "values": [
+        {
+         "value": "Over 8",
+         "odd": "1.40"
+        },
+        {
+         "value": "Under 8",
+         "odd": "2.52"
+        },
+        {
+         "value": "Over 8.5",
+         "odd": "1.60"
+        },
+        {
+         "value": "Under 8.5",
+         "odd": "2.14"
+        },
+        {
+         "value": "Over 9",
+         "odd": "1.81"
+        },
+        {
+         "value": "Under 9",
+         "odd": "1.94"
+        }
+       ]
+      },
+      {
+       "id": 57,
+       "name": "Home Corners Over/Under",
+       "values": [
+        {
+         "value": "Over 3.5",
+         "odd": "1.36"
+        },
+        {
+         "value": "Under 3.5",
+         "odd": "2.65"
+        },
+        {
+         "value": "Over 4.5",
+         "odd": "1.81"
+        },
+        {
+         "value": "Under 4.5",
+         "odd": "1.89"
+        },
+        {
+         "value": "Over 4.0",
+         "odd": "1.51"
+        },
+        {
+         "value": "Under 4.0",
+         "odd": "2.32"
+        }
+       ]
+      },
+      {
+       "id": 80,
+       "name": "Cards Over/Under",
+       "values": [
+        {
+         "value": "Over 3.5",
+         "odd": "1.73"
+        },
+        {
+         "value": "Under 3.5",
+         "odd": "2.00"
+        },
+        {
+         "value": "Over 4.5",
+         "odd": "2.20"
+        },
+        {
+         "value": "Under 4.5",
+         "odd": "1.62"
+        }
+       ]
+      },
+      {
+       "id": 150,
+       "name": "Home Team Yellow Cards",
+       "values": [
+        {
+         "value": "Over 1.5",
+         "odd": "1.66"
+        },
+        {
+         "value": "Under 1.5",
+         "odd": "2.09"
+        },
+        {
+         "value": "Over 2.5",
+         "odd": "2.82"
+        },
+        {
+         "value": "Under 2.5",
+         "odd": "1.35"
+        },
+        {
+         "value": "Over 3.5",
+         "odd": "4.90"
+        },
+        {
+         "value": "Under 3.5",
+         "odd": "1.10"
+        }
+       ]
+      },
+      {
+       "id": 151,
+       "name": "Away Team Yellow Cards",
+       "values": [
+        {
+         "value": "Over 1.5",
+         "odd": "1.57"
+        },
+        {
+         "value": "Under 1.5",
+         "odd": "2.19"
+        },
+        {
+         "value": "Over 2.5",
+         "odd": "2.62"
+        },
+        {
+         "value": "Under 2.5",
+         "odd": "1.41"
+        },
+        {
+         "value": "Over 3.5",
+         "odd": "4.50"
+        },
+        {
+         "value": "Under 3.5",
+         "odd": "1.12"
+        }
+       ]
+      },
+      {
+       "id": 211,
+       "name": "Total Shots",
+       "values": [
+        {
+         "value": "Over 26.5",
+         "odd": "1.80"
+        },
+        {
+         "value": "Under 26.5",
+         "odd": "1.91"
+        },
+        {
+         "value": "Over 24.5",
+         "odd": "1.83"
+        },
+        {
+         "value": "Under 24.5",
+         "odd": "1.83"
+        },
+        {
+         "value": "Over 25.5",
+         "odd": "1.73"
+        },
+        {
+         "value": "Under 25.5",
+         "odd": "2.00"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

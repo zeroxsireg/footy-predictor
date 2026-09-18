@@ -1,13 +1,13 @@
 """Redis cache manager for football data."""
 
 import json
-import redis
 import gzip
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any, Union
 import logging
 
 from core.config import get_settings
+from utils.cache_ttl import TTL_CONFIG
 
 logger = logging.getLogger(__name__)
 
@@ -15,20 +15,8 @@ logger = logging.getLogger(__name__)
 class RedisFootballCache:
     """Redis cache manager for football data with compression and TTL management."""
     
-    # TTL Configuration (in seconds)
-    TTL_CONFIG = {
-        'roster': 30 * 24 * 3600,        # 30 giorni - roster cambiano raramente
-        'team_stats': -1,                 # MAI SCADONO - statistiche squadre (dati storici)
-        'shots_corners': -1,              # MAI SCADONO - shots/corners (dati storici)
-        'historical_data': -1,            # Mai scadono - dati storici
-        'finished_matches': -1,           # Mai scadono - partite finite
-        'league_standings': 24 * 3600,    # 1 giorno - classifiche (cambiano)
-        'live_odds': 30 * 60,             # 30 minuti - quote live
-        'upcoming_fixtures': 6 * 3600,    # 6 ore - prossime partite
-        'league_players_all': 24 * 3600, # 24 ore per tutti i giocatori del campionato
-        'team_metadata': -1,              # Mai scadono - metadati squadre
-        'data_update': -1                 # Mai scadono - timestamp aggiornamenti
-    }
+    # TTL Configuration (in seconds): SSOT in utils/cache_ttl.py
+    TTL_CONFIG = TTL_CONFIG
     
     def __init__(self):
         """Initialize Redis connection."""
@@ -40,6 +28,7 @@ class RedisFootballCache:
         """Establish Redis connection with SSL support."""
         try:
             import ssl
+            import redis
             # Try multiple connection methods for Redis Cloud compatibility
             connection_configs = [
                 # Method 1: SSL with TLS 1.2+
@@ -491,11 +480,21 @@ class RedisFootballCache:
             return None
 
 
-# Global instance
+# Global instance (solo backend Redis esplicito, usato da utils/cache_manager.py)
 _redis_cache = None
 
-def get_redis_cache() -> RedisFootballCache:
-    """Get global Redis cache instance."""
+
+def get_redis_cache():
+    """Cache condivisa dell'app. Backend scelto da CACHE_BACKEND (default sqlite).
+
+    Nome storico mantenuto: tutti i chiamanti esistenti restano invariati.
+    """
+    from utils.cache_manager import get_cache
+    return get_cache()
+
+
+def _get_redis_backend() -> RedisFootballCache:
+    """Istanza Redis reale (chiamata solo da utils/cache_manager.py)."""
     global _redis_cache
     if _redis_cache is None:
         _redis_cache = RedisFootballCache()

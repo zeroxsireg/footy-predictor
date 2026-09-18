@@ -5,6 +5,7 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from adapters.http_client import FootballHTTPClient
+from adapters.roster_fallback import get_team_roster_with_fallback  # noqa: F401  (re-export)
 
 
 class RosterService:

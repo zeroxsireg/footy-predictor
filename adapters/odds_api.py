@@ -7,6 +7,7 @@ import time
 from dataclasses import dataclass
 
 from core.config import get_settings
+from adapters.odds_extras import OddsExtrasMixin
 
 
 class OddsAPIError(Exception):
@@ -31,7 +32,7 @@ class FixtureOdds:
     bookmakers: List[BookmakerOdds]
 
 
-class OddsAPIClient:
+class OddsAPIClient(OddsExtrasMixin):
     """Client for the Football Odds API."""
     
     def __init__(self):

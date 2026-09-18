@@ -9,6 +9,7 @@ from typing import List
 from .base import BaseAnalyzer
 from core.models import TeamStats
 from core.betting_models import BettingRecommendation
+from core import shrinkage as sh
 
 
 class ResultAnalyzer(BaseAnalyzer):
@@ -35,16 +36,17 @@ class ResultAnalyzer(BaseAnalyzer):
         Returns:
             {"1": p_home, "X": p_draw, "2": p_away}
         """
-        home_form = home_stats.recent_form_points
-        away_form = away_stats.recent_form_points
+        home_form = self._form_points(home_stats)
+        away_form = self._form_points(away_stats)
 
-        home_goal_diff = home_stats.goal_difference_per_game
-        away_goal_diff = away_stats.goal_difference_per_game
+        # Per-game signals shrunk toward the league average (few games -> prior)
+        home_goal_diff = self._goal_diff(home_stats)
+        away_goal_diff = self._goal_diff(away_stats)
 
-        # Percentuali vittoria/pareggio/sconfitta storiche
-        home_win_pct = (home_stats.wins / home_stats.matches_played * 100) if home_stats.matches_played > 0 else 33
-        home_draw_pct = (home_stats.draws / home_stats.matches_played * 100) if home_stats.matches_played > 0 else 33
-        away_win_pct = (away_stats.wins / away_stats.matches_played * 100) if away_stats.matches_played > 0 else 33
+        # Percentuali vittoria/pareggio/sconfitta storiche (0-100)
+        home_win_pct = self._rate(home_stats.wins, home_stats.matches_played, sh.PRIOR_WIN_RATE) * 100
+        home_draw_pct = self._rate(home_stats.draws, home_stats.matches_played, sh.PRIOR_DRAW_RATE) * 100
+        away_win_pct = self._rate(away_stats.wins, away_stats.matches_played, sh.PRIOR_WIN_RATE) * 100
 
         # Punteggi grezzi (non ancora probabilità)
         home_raw = (
@@ -71,13 +73,34 @@ class ResultAnalyzer(BaseAnalyzer):
         draw_raw = max(5.0, draw_raw)
         away_raw = max(5.0, away_raw)
 
-        # Normalizza (le tre probabilità devono sommare a 1)
+        # Normalizza (le tre probabilità devono sommare a 1), poi clamp anti-certezza
         total = home_raw + draw_raw + away_raw
-        return {
-            "1": home_raw / total,
-            "X": draw_raw / total,
-            "2": away_raw / total,
-        }
+        probs = {"1": home_raw / total, "X": draw_raw / total, "2": away_raw / total}
+        return self._clamp_and_renormalize(probs)
+
+    @staticmethod
+    def _clamp_and_renormalize(probs: dict) -> dict:
+        """Clamp each outcome to [P_MIN, P_MAX] and rescale the rest so the sum stays 1."""
+        clamped = {k: sh.clamp_probability(v) for k, v in probs.items()}
+        total = sum(clamped.values())
+        return {k: v / total for k, v in clamped.items()}
+
+    @staticmethod
+    def _rate(successes: int, games: int, prior: float) -> float:
+        return sh.shrink(successes, games, prior, sh.K_RESULT)
+
+    @staticmethod
+    def _goal_diff(stats: TeamStats) -> float:
+        """Goal difference per game shrunk toward 0."""
+        return sh.shrink(stats.goals_for - stats.goals_against, stats.matches_played,
+                         sh.PRIOR_GOAL_DIFF_PER_GAME, sh.K_RESULT)
+
+    @staticmethod
+    def _form_points(stats: TeamStats) -> float:
+        """Points over the last (up to) 5 games, on a 5-game scale, shrunk toward league PPG."""
+        form = stats.form[-5:] if stats.form else ""
+        pts = stats.recent_form_points
+        return 5 * sh.shrink(pts, len(form), sh.PRIOR_POINTS_PER_GAME, sh.K_RESULT)
 
     def analyze(self, home_stats: TeamStats, away_stats: TeamStats, **kwargs) -> List[BettingRecommendation]:
         """

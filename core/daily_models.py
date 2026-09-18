@@ -27,6 +27,7 @@ class DailyPick:
     kelly_quarter: Optional[float] = None
     verdict: Optional[str] = None
     odds_range: Optional[str] = None  # DEPRECATO
+    stake_fraction: Optional[float] = None  # capped fractional Kelly, share of bankroll
     
     @property
     def confidence_score(self) -> float:

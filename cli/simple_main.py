@@ -75,15 +75,23 @@ def _cmd_cache():
     try:
         from utils.redis_cache import get_redis_cache
         cache = get_redis_cache()
-        print("\n💾 REDIS CACHE STATISTICS")
+        health = cache.health_check()
+        backend = health.get("backend", "redis").upper()
+        print(f"\n💾 CACHE STATISTICS ({backend})")
         print("=" * 35)
         if not cache.is_connected():
-            print("❌ Redis non connesso")
+            print(f"❌ Cache {backend} non disponibile")
             return
-        health = cache.health_check()
         mem = health.get("memory_usage", {})
         print(f"Stato:               {health.get('status', 'unknown').upper()}")
         print(f"Chiavi totali:       {mem.get('keys_count', 'N/A')}")
+        if backend == "SQLITE":
+            stats = health.get("stats", {})
+            print(f"File:                {health.get('path', 'N/A')}")
+            print(f"Dimensione file:     {mem.get('used_memory_human', 'N/A')} ({mem.get('used_memory_mb', 0):.2f} MB)")
+            print(f"Hit / miss:          {stats.get('hits', 0)} / {stats.get('misses', 0)}")
+            print(f"Scadute rimosse:     {stats.get('expired', 0)}")
+            return
         print(f"Memoria usata:       {mem.get('used_memory_human', 'N/A')} ({mem.get('used_memory_mb', 0):.1f} MB)")
         print(f"Limite memoria:      {mem.get('max_memory_mb', 30)} MB")
         print(f"Utilizzo:            {mem.get('usage_percentage', 0):.1f}%")
@@ -103,10 +111,10 @@ def _cmd_players():
     try:
         from utils.redis_cache import get_redis_cache
         cache = get_redis_cache()
-        print("\n👤 STATISTICHE GIOCATORI (CACHE REDIS)")
+        print("\n👤 STATISTICHE GIOCATORI (CACHE LOCALE)")
         print("=" * 40)
         if not cache.is_connected():
-            print("❌ Redis non connesso")
+            print("❌ Cache non disponibile")
             return
         settings = get_settings()
         cached_teams = cache.get_cached_teams(settings.default_season)

@@ -14,10 +14,14 @@ class Settings(BaseSettings):
     default_league: str = "Serie A"
     default_season: int = 2026
     
-    # Redis Configuration
-    redis_host: str
+    # Cache backend: sqlite (default, nessun demone) | redis | auto (redis se raggiungibile, altrimenti sqlite)
+    cache_backend: str = "sqlite"
+    cache_db_path: str = "data/footy_predictor.db"
+
+    # Redis Configuration (opzionale: usato solo con CACHE_BACKEND=redis|auto)
+    redis_host: str = ""
     redis_port: int = 6379
-    redis_password: str
+    redis_password: str = ""
     redis_ssl: bool = True
     redis_db: int = 0
     

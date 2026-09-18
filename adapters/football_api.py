@@ -7,7 +7,6 @@ should import.  Internally it composes four focused services:
   FootballHTTPClient  — rate-limited HTTP transport
   TeamStatsService    — season stats per team
   RosterService       — squad / player data
-  LiveMatchService    — real-time match data
 
 Adding a new data source means adding a new service and wiring it here;
 nothing else needs to change.
@@ -24,7 +23,6 @@ from core.models import Team, Fixture, TeamStats
 from adapters.http_client import FootballHTTPClient, FootballAPIError
 from adapters.team_stats_service import TeamStatsService
 from adapters.roster_service import RosterService
-from adapters.live_service import LiveMatchService
 
 # Re-export so existing callers can still `from adapters.football_api import FootballAPIError`
 __all__ = ["FootballAPIClient", "FootballAPIError"]
@@ -55,7 +53,6 @@ class FootballAPIClient:
         self._http = FootballHTTPClient()
         self._team_stats_svc = TeamStatsService(self._http, self.redis_cache)
         self._roster_svc = RosterService(self._http, self.redis_cache)
-        self._live_svc = LiveMatchService(self._http)
 
         self._league_cache: Dict[tuple, int] = dict(self._KNOWN_LEAGUES)
         self.settings = get_settings()
@@ -273,14 +270,6 @@ class FootballAPIClient:
         return await self._roster_svc.force_update_player_statistics(
             player_id, league_id, season
         )
-
-    async def get_live_fixtures(
-        self, leagues: List[int] = None
-    ) -> List[Dict[str, Any]]:
-        return await self._live_svc.get_live_fixtures(leagues)
-
-    async def get_live_match_statistics(self, fixture_id: int) -> Dict[str, Any]:
-        return await self._live_svc.get_live_match_statistics(fixture_id)
 
     # ── parsing helpers ───────────────────────────────────────────────────────
 

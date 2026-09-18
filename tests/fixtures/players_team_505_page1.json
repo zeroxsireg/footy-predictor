@@ -1,0 +1,639 @@
+{
+ "_meta": {
+  "source": "API-Football /players?team=505&season=2026 page 1 (reduced to 4)"
+ },
+ "paging": {
+  "current": 1,
+  "total": 2
+ },
+ "response": [
+  {
+   "player": {
+    "id": 5,
+    "name": "M. Akanji",
+    "firstname": "Manuel Obafemi",
+    "lastname": "Akanji",
+    "age": 30,
+    "nationality": "Switzerland",
+    "height": "188",
+    "weight": "91",
+    "injured": false
+   },
+   "statistics": [
+    {
+     "team": {
+      "id": 505,
+      "name": "Inter"
+     },
+     "league": {
+      "id": 2,
+      "name": "UEFA Champions League",
+      "country": "World",
+      "season": 2026
+     },
+     "games": {
+      "appearences": 0,
+      "lineups": 0,
+      "minutes": null,
+      "number": 25,
+      "position": "Defender",
+      "rating": null,
+      "captain": false
+     },
+     "substitutes": {
+      "in": 0,
+      "out": 0,
+      "bench": 1
+     },
+     "shots": {
+      "total": null,
+      "on": null
+     },
+     "goals": {
+      "total": 0,
+      "conceded": 0,
+      "assists": 0,
+      "saves": null
+     },
+     "passes": {
+      "total": null,
+      "key": null,
+      "accuracy": null
+     },
+     "tackles": {
+      "total": null,
+      "blocks": null,
+      "interceptions": null
+     },
+     "duels": {
+      "total": null,
+      "won": null
+     },
+     "dribbles": {
+      "attempts": null,
+      "success": null,
+      "past": null
+     },
+     "fouls": {
+      "drawn": null,
+      "committed": null
+     },
+     "cards": {
+      "yellow": 0,
+      "yellowred": 0,
+      "red": 0
+     },
+     "penalty": {
+      "won": null,
+      "commited": null,
+      "scored": 0,
+      "missed": 0,
+      "saved": null
+     }
+    },
+    {
+     "team": {
+      "id": 505,
+      "name": "Inter"
+     },
+     "league": {
+      "id": 135,
+      "name": "Serie A",
+      "country": "Italy",
+      "season": 2026
+     },
+     "games": {
+      "appearences": 4,
+      "lineups": 4,
+      "minutes": 323,
+      "number": 25,
+      "position": "Defender",
+      "rating": "7.03",
+      "captain": false
+     },
+     "substitutes": {
+      "in": 0,
+      "out": 2,
+      "bench": 0
+     },
+     "shots": {
+      "total": 6,
+      "on": 1
+     },
+     "goals": {
+      "total": 0,
+      "conceded": 0,
+      "assists": 1,
+      "saves": null
+     },
+     "passes": {
+      "total": 253,
+      "key": 2,
+      "accuracy": 95
+     },
+     "tackles": {
+      "total": 6,
+      "blocks": 2,
+      "interceptions": 6
+     },
+     "duels": {
+      "total": 27,
+      "won": 20
+     },
+     "dribbles": {
+      "attempts": 1,
+      "success": null,
+      "past": null
+     },
+     "fouls": {
+      "drawn": null,
+      "committed": 3
+     },
+     "cards": {
+      "yellow": 1,
+      "yellowred": 0,
+      "red": 0
+     },
+     "penalty": {
+      "won": null,
+      "commited": null,
+      "scored": 0,
+      "missed": 0,
+      "saved": null
+     }
+    }
+   ]
+  },
+  {
+   "player": {
+    "id": 217,
+    "name": "Lautaro Mart\u00ednez",
+    "firstname": "Lautaro Javier",
+    "lastname": "Mart\u00ednez",
+    "age": 28,
+    "nationality": "Argentina",
+    "height": "174",
+    "weight": "72",
+    "injured": false
+   },
+   "statistics": [
+    {
+     "team": {
+      "id": 505,
+      "name": "Inter"
+     },
+     "league": {
+      "id": 2,
+      "name": "UEFA Champions League",
+      "country": "World",
+      "season": 2026
+     },
+     "games": {
+      "appearences": 1,
+      "lineups": 1,
+      "minutes": 90,
+      "number": 10,
+      "position": "Attacker",
+      "rating": "7.2",
+      "captain": false
+     },
+     "substitutes": {
+      "in": 0,
+      "out": 0,
+      "bench": 0
+     },
+     "shots": {
+      "total": 3,
+      "on": 1
+     },
+     "goals": {
+      "total": 0,
+      "conceded": 0,
+      "assists": 1,
+      "saves": null
+     },
+     "passes": {
+      "total": 39,
+      "key": 2,
+      "accuracy": 94
+     },
+     "tackles": {
+      "total": 1,
+      "blocks": null,
+      "interceptions": 1
+     },
+     "duels": {
+      "total": 8,
+      "won": 5
+     },
+     "dribbles": {
+      "attempts": 3,
+      "success": 2,
+      "past": null
+     },
+     "fouls": {
+      "drawn": 1,
+      "committed": 1
+     },
+     "cards": {
+      "yellow": 1,
+      "yellowred": 0,
+      "red": 0
+     },
+     "penalty": {
+      "won": null,
+      "commited": null,
+      "scored": 0,
+      "missed": 0,
+      "saved": null
+     }
+    },
+    {
+     "team": {
+      "id": 505,
+      "name": "Inter"
+     },
+     "league": {
+      "id": 135,
+      "name": "Serie A",
+      "country": "Italy",
+      "season": 2026
+     },
+     "games": {
+      "appearences": 3,
+      "lineups": 3,
+      "minutes": 234,
+      "number": 10,
+      "position": "Attacker",
+      "rating": "7.13",
+      "captain": false
+     },
+     "substitutes": {
+      "in": 0,
+      "out": 1,
+      "bench": 1
+     },
+     "shots": {
+      "total": 11,
+      "on": 4
+     },
+     "goals": {
+      "total": 2,
+      "conceded": 0,
+      "assists": 0,
+      "saves": null
+     },
+     "passes": {
+      "total": 81,
+      "key": 4,
+      "accuracy": 79
+     },
+     "tackles": {
+      "total": 4,
+      "blocks": null,
+      "interceptions": 1
+     },
+     "duels": {
+      "total": 29,
+      "won": 12
+     },
+     "dribbles": {
+      "attempts": 7,
+      "success": 2,
+      "past": null
+     },
+     "fouls": {
+      "drawn": 4,
+      "committed": 4
+     },
+     "cards": {
+      "yellow": 2,
+      "yellowred": 0,
+      "red": 0
+     },
+     "penalty": {
+      "won": null,
+      "commited": null,
+      "scored": 0,
+      "missed": 0,
+      "saved": null
+     }
+    }
+   ]
+  },
+  {
+   "player": {
+    "id": 293,
+    "name": "C. Jones",
+    "firstname": "Curtis Julian",
+    "lastname": "Jones",
+    "age": 24,
+    "nationality": "England",
+    "height": "185",
+    "weight": "78",
+    "injured": false
+   },
+   "statistics": [
+    {
+     "team": {
+      "id": 505,
+      "name": "Inter"
+     },
+     "league": {
+      "id": 2,
+      "name": "UEFA Champions League",
+      "country": "World",
+      "season": 2026
+     },
+     "games": {
+      "appearences": 1,
+      "lineups": 1,
+      "minutes": 90,
+      "number": 21,
+      "position": "Midfielder",
+      "rating": "6.5",
+      "captain": false
+     },
+     "substitutes": {
+      "in": 0,
+      "out": 0,
+      "bench": 0
+     },
+     "shots": {
+      "total": 2,
+      "on": 1
+     },
+     "goals": {
+      "total": 0,
+      "conceded": 0,
+      "assists": 0,
+      "saves": null
+     },
+     "passes": {
+      "total": 73,
+      "key": null,
+      "accuracy": 97
+     },
+     "tackles": {
+      "total": 1,
+      "blocks": null,
+      "interceptions": null
+     },
+     "duels": {
+      "total": 6,
+      "won": 1
+     },
+     "dribbles": {
+      "attempts": null,
+      "success": null,
+      "past": null
+     },
+     "fouls": {
+      "drawn": null,
+      "committed": null
+     },
+     "cards": {
+      "yellow": 0,
+      "yellowred": 0,
+      "red": 0
+     },
+     "penalty": {
+      "won": null,
+      "commited": null,
+      "scored": 0,
+      "missed": 0,
+      "saved": null
+     }
+    },
+    {
+     "team": {
+      "id": 505,
+      "name": "Inter"
+     },
+     "league": {
+      "id": 135,
+      "name": "Serie A",
+      "country": "Italy",
+      "season": 2026
+     },
+     "games": {
+      "appearences": 3,
+      "lineups": 0,
+      "minutes": 98,
+      "number": 21,
+      "position": "Midfielder",
+      "rating": "6.9",
+      "captain": false
+     },
+     "substitutes": {
+      "in": 3,
+      "out": 0,
+      "bench": 3
+     },
+     "shots": {
+      "total": null,
+      "on": null
+     },
+     "goals": {
+      "total": 0,
+      "conceded": 0,
+      "assists": 0,
+      "saves": null
+     },
+     "passes": {
+      "total": 89,
+      "key": 1,
+      "accuracy": 94
+     },
+     "tackles": {
+      "total": 3,
+      "blocks": null,
+      "interceptions": 1
+     },
+     "duels": {
+      "total": 15,
+      "won": 8
+     },
+     "dribbles": {
+      "attempts": 3,
+      "success": 2,
+      "past": null
+     },
+     "fouls": {
+      "drawn": 2,
+      "committed": 1
+     },
+     "cards": {
+      "yellow": 0,
+      "yellowred": 0,
+      "red": 0
+     },
+     "penalty": {
+      "won": null,
+      "commited": null,
+      "scored": 0,
+      "missed": 0,
+      "saved": null
+     }
+    }
+   ]
+  },
+  {
+   "player": {
+    "id": 329,
+    "name": "P. Zieli\u0144ski",
+    "firstname": "Piotr Sebastian",
+    "lastname": "Zieli\u0144ski",
+    "age": 31,
+    "nationality": "Poland",
+    "height": "180",
+    "weight": "76",
+    "injured": false
+   },
+   "statistics": [
+    {
+     "team": {
+      "id": 505,
+      "name": "Inter"
+     },
+     "league": {
+      "id": 2,
+      "name": "UEFA Champions League",
+      "country": "World",
+      "season": 2026
+     },
+     "games": {
+      "appearences": 1,
+      "lineups": 0,
+      "minutes": 30,
+      "number": 7,
+      "position": "Midfielder",
+      "rating": "6.9",
+      "captain": false
+     },
+     "substitutes": {
+      "in": 1,
+      "out": 0,
+      "bench": 1
+     },
+     "shots": {
+      "total": null,
+      "on": null
+     },
+     "goals": {
+      "total": 0,
+      "conceded": 0,
+      "assists": 0,
+      "saves": null
+     },
+     "passes": {
+      "total": 25,
+      "key": 1,
+      "accuracy": 96
+     },
+     "tackles": {
+      "total": null,
+      "blocks": null,
+      "interceptions": 1
+     },
+     "duels": {
+      "total": 1,
+      "won": null
+     },
+     "dribbles": {
+      "attempts": null,
+      "success": null,
+      "past": null
+     },
+     "fouls": {
+      "drawn": null,
+      "committed": null
+     },
+     "cards": {
+      "yellow": 0,
+      "yellowred": 0,
+      "red": 0
+     },
+     "penalty": {
+      "won": null,
+      "commited": null,
+      "scored": 0,
+      "missed": 0,
+      "saved": null
+     }
+    },
+    {
+     "team": {
+      "id": 505,
+      "name": "Inter"
+     },
+     "league": {
+      "id": 135,
+      "name": "Serie A",
+      "country": "Italy",
+      "season": 2026
+     },
+     "games": {
+      "appearences": 4,
+      "lineups": 3,
+      "minutes": 262,
+      "number": 7,
+      "position": "Midfielder",
+      "rating": "7.4",
+      "captain": false
+     },
+     "substitutes": {
+      "in": 1,
+      "out": 3,
+      "bench": 1
+     },
+     "shots": {
+      "total": 4,
+      "on": 2
+     },
+     "goals": {
+      "total": 1,
+      "conceded": 0,
+      "assists": 1,
+      "saves": null
+     },
+     "passes": {
+      "total": 218,
+      "key": 3,
+      "accuracy": 93
+     },
+     "tackles": {
+      "total": 3,
+      "blocks": 1,
+      "interceptions": 1
+     },
+     "duels": {
+      "total": 12,
+      "won": 6
+     },
+     "dribbles": {
+      "attempts": null,
+      "success": null,
+      "past": null
+     },
+     "fouls": {
+      "drawn": 3,
+      "committed": 1
+     },
+     "cards": {
+      "yellow": 0,
+      "yellowred": 0,
+      "red": 0
+     },
+     "penalty": {
+      "won": null,
+      "commited": null,
+      "scored": 0,
+      "missed": 0,
+      "saved": null
+     }
+    }
+   ]
+  }
+ ]
+}

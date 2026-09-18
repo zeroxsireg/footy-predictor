@@ -1,13 +1,15 @@
 """Pick selection and ranking logic for daily analysis."""
 
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from .daily_models import DailyPick
+from .value_selection import MIN_EV_THRESHOLD, select_value_picks
 
 
 class PickSelector:
     """Handles pick selection and ranking logic."""
     
     def __init__(self):
+        self.skipped_combinations = 0  # combos dropped for missing real quotes
         # Market diversity weights - Bilanciati per varietà
         self.market_weights = {
             # Match Goals (PRIORITÀ ALTA)
@@ -142,105 +144,59 @@ class PickSelector:
         # Return ALL picks sorted (not just top 10)
         return sorted_picks
     
-    def _calculate_combo_odds(self, picks: List[DailyPick]) -> float:
+    def _calculate_combo_odds(self, picks: List[DailyPick]) -> Optional[float]:
         """
-        Calcola le quote totali di una combinazione.
-        USA LE QUOTE REALI quando disponibili, altrimenti stima dalla probabilità.
+        Total odds of a combination, from REAL bookmaker quotes only.
+
+        If any leg lacks a real quote the total is None ("quote incomplete"):
+        no odds are ever invented from the model probability.
         """
         total_odds = 1.0
-        
         for pick in picks:
-            if pick.real_odds:
-                # USA QUOTE REALI dal bookmaker
-                total_odds *= pick.real_odds
-            else:
-                # FALLBACK: Stima dalla probabilità (formula inversa)
-                # Odds = 100 / Probabilità
-                # Esempio: 75% → 100/75 = 1.33, 50% → 100/50 = 2.0
-                if pick.percentage > 0:
-                    estimated = 100 / pick.percentage
-                    total_odds *= max(1.01, estimated)  # Minimo 1.01
-                else:
-                    total_odds *= 2.0  # Fallback generico
-        
+            if not pick.real_odds or pick.real_odds <= 1.0:
+                return None
+            total_odds *= pick.real_odds
         return round(total_odds, 2)
 
+    def _make_combo(self, picks: List[DailyPick], description: str) -> Optional[Dict]:
+        """Build a combination dict, or None when any leg has no real quote."""
+        total = self._calculate_combo_odds(picks)
+        if total is None:
+            self.skipped_combinations += 1
+            return None
+        return {
+            "picks": picks,
+            "confidence": sum(p.percentage for p in picks) / len(picks),
+            "estimated_odds": total,
+            "description": description,
+        }
+
     def _generate_combinations(self, top_picks: List[DailyPick]) -> List:
-        """Generate optimal betting combinations."""
-        combinations = []
-        
+        """Generate combinations; only those fully priced with real quotes are kept."""
+        self.skipped_combinations = 0
+        candidates = []
         if len(top_picks) < 3:
-            return combinations
-        
-        # 3-pick combination (diversified)
-        if len(top_picks) >= 3:
-            combo_3 = top_picks[:3]
-            avg_confidence = sum(p.percentage for p in combo_3) / 3
-            estimated_odds = self._calculate_combo_odds(combo_3)
-            
-            combinations.append({
-                "picks": combo_3,
-                "confidence": avg_confidence,
-                "estimated_odds": estimated_odds,
-                "description": "3 Picks - Diversificati"
-            })
-        
-        # 4-pick combination
+            return []
+        candidates.append((top_picks[:3], "3 Picks - Diversificati"))
         if len(top_picks) >= 4:
-            combo_4 = top_picks[:4]
-            avg_confidence = sum(p.percentage for p in combo_4) / 4
-            estimated_odds = self._calculate_combo_odds(combo_4)
-            
-            combinations.append({
-                "picks": combo_4,
-                "confidence": avg_confidence,
-                "estimated_odds": estimated_odds,
-                "description": "4 Picks - Bilanciati"
-            })
-        
-        # 5-pick combination (maximum diversification)
+            candidates.append((top_picks[:4], "4 Picks - Bilanciati"))
         if len(top_picks) >= 5:
-            combo_5 = top_picks[:5]
-            avg_confidence = sum(p.percentage for p in combo_5) / 5
-            estimated_odds = self._calculate_combo_odds(combo_5)
-            
-            combinations.append({
-                "picks": combo_5,
-                "confidence": avg_confidence,
-                "estimated_odds": estimated_odds,
-                "description": "5 Picks - Massima Diversificazione"
-            })
-        
-        # High confidence only combination
-        high_conf_picks = [p for p in top_picks if p.confidence == "HIGH"]
-        if len(high_conf_picks) >= 3:
-            combo_high = high_conf_picks[:3]
-            avg_confidence = sum(p.percentage for p in combo_high) / 3
-            estimated_odds = self._calculate_combo_odds(combo_high)
-            
-            combinations.append({
-                "picks": combo_high,
-                "confidence": avg_confidence,
-                "estimated_odds": estimated_odds,
-                "description": "3 Picks - Solo High Confidence"
-            })
-        
-        # Mixed combination (2 high + 1 medium)
-        if len(high_conf_picks) >= 2:
-            medium_conf_picks = [p for p in top_picks if p.confidence == "MEDIUM"]
-            if medium_conf_picks:
-                combo_mixed = high_conf_picks[:2] + [medium_conf_picks[0]]
-                avg_confidence = sum(p.percentage for p in combo_mixed) / 3
-                estimated_odds = self._calculate_combo_odds(combo_mixed)
-                
-                combinations.append({
-                    "picks": combo_mixed,
-                    "confidence": avg_confidence,
-                    "estimated_odds": estimated_odds,
-                    "description": "Misto - 2 High + 1 Medium"
-                })
-        
-        return combinations
+            candidates.append((top_picks[:5], "5 Picks - Massima Diversificazione"))
+
+        high = [p for p in top_picks if p.confidence == "HIGH"]
+        if len(high) >= 3:
+            candidates.append((high[:3], "3 Picks - Solo High Confidence"))
+        medium = [p for p in top_picks if p.confidence == "MEDIUM"]
+        if len(high) >= 2 and medium:
+            candidates.append((high[:2] + [medium[0]], "Misto - 2 High + 1 Medium"))
+
+        combos = (self._make_combo(picks, desc) for picks, desc in candidates)
+        return [c for c in combos if c]
+
+    def select_value_picks(self, picks: List[DailyPick], tau: float = MIN_EV_THRESHOLD,
+                           limit: Optional[int] = None) -> List[DailyPick]:
+        """Single-bet value mode: real quote + EV > tau, sorted by EV, Kelly-sized."""
+        return select_value_picks(picks, tau, limit)
 
     def _create_summary(self, all_picks: List[DailyPick], top_picks: List[DailyPick], 
                        combinations: List) -> Dict[str, Any]:
@@ -257,5 +213,6 @@ class PickSelector:
             "low_confidence_picks": low_confidence_picks,
             "average_confidence": average_confidence,
             "total_combinations": len(combinations),
+            "combinations_skipped_no_odds": self.skipped_combinations,
             "best_combination_confidence": combinations[0]["confidence"] if combinations else 0
         }

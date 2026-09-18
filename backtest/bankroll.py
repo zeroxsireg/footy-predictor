@@ -3,17 +3,22 @@ Bankroll simulation: bet the xG model's value selections through a season and
 track the money.
 
 Honest scope: only 1X2 and Over/Under 2.5 have historical odds (football-data),
-so only these can be simulated. Cards/multigol/BTTS — where the model has real
-edge — have no historical odds and cannot be bet here.
+so only these can be simulated. For the other markets our measured skill is
+NOT a proven edge: multigol skill is ~0, BTTS is negative, and player/team
+cards beat only the base-rate frequency (not a market) and have no historical
+odds, so none of them can be bet or validated here.
 
-Stakes: fractional Kelly on value bets (our prob beats the implied prob by the
-edge threshold), capped per bet. Best-available ("max") odds = line shopping.
+Value rule (rule 7): bet when EV = P * odds - 1 > tau, computed through
+core/edge_calculator. Stakes: fractional Kelly, capped per bet. Best-available
+("max") odds = line shopping.
 """
 
 import difflib
 import unicodedata
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 
+from backtest.odds_data import verify_match
+from core.value_selection import MIN_EV_THRESHOLD, ev_fraction
 from core.edge_calculator import calculate_kelly
 
 
@@ -24,25 +29,48 @@ def _norm(name: str) -> str:
     return " ".join(s.split())
 
 
-def build_fuzzy_index(odds_records: List[Dict], our_names) -> Tuple[Dict, List]:
-    """Map football-data team names to our API names via normalized fuzzy match."""
+def build_fuzzy_index(
+    odds_records: List[Dict], our_names, fixtures: Optional[List[Dict]] = None,
+    rejected: Optional[List] = None,
+) -> Tuple[Dict, List]:
+    """
+    Map football-data records to our (home, away) keys.
+
+    Names resolve by exact normalized match first (records normally arrive
+    already de-aliased by odds_data.LEAGUE_ALIASES); fuzzy matching is only a
+    last resort and can never claim a name already taken by an exact match.
+
+    fixtures: when given, every pairing is CROSS-CHECKED against the fixture
+    (same full-time goals, date within a day). Incoherent pairings are refused
+    and reported as unmatched (also appended to `rejected` if provided).
+    """
     norm_to_our = {_norm(n): n for n in our_names}
-    keys = list(norm_to_our)
+    exact = {r["home"] for r in odds_records} | {r["away"] for r in odds_records}
+    claimed = {norm_to_our[_norm(n)] for n in exact if _norm(n) in norm_to_our}
+    free_keys = [k for k, v in norm_to_our.items() if v not in claimed]
+    by_pair = {(f["home_name"], f["away_name"]): f for f in (fixtures or [])}
 
     def match(fd_name):
         n = _norm(fd_name)
         if n in norm_to_our:
             return norm_to_our[n]
-        m = difflib.get_close_matches(n, keys, n=1, cutoff=0.6)
+        m = difflib.get_close_matches(n, free_keys, n=1, cutoff=0.6)
         return norm_to_our[m[0]] if m else None
 
     index, unmatched = {}, []
     for r in odds_records:
         h, a = match(r["home"]), match(r["away"])
-        if h and a:
-            index[(h, a)] = r
-        else:
+        if not (h and a):
             unmatched.append((r["home"], r["away"]))
+            continue
+        if fixtures is not None:
+            fx = by_pair.get((h, a))
+            if fx is None or not verify_match(fx, r):
+                unmatched.append((r["home"], r["away"]))
+                if rejected is not None:
+                    rejected.append((r["home"], r["away"], h, a))
+                continue
+        index[(h, a)] = r
     return index, unmatched
 
 
@@ -91,13 +119,14 @@ def build_top_team_map(
 
 def simulate(
     predictions: List[Dict], odds_index: Dict, *,
-    start: float = 100.0, edge_threshold: float = 0.05,
+    start: float = 100.0, ev_threshold: float = MIN_EV_THRESHOLD,
     kelly_fraction: float = 0.25, max_stake_frac: float = 0.05,
     markets=("1x2", "ou"), top_map: Dict = None, top_mode: str = "any",
 ) -> Dict:
     """Walk the season in date order, placing fractional-Kelly value bets.
 
     markets: which markets to bet — "1x2", "ou", or both.
+    ev_threshold: minimum EV (P * odds - 1) to place a bet, default tau = 3%.
     """
     bankroll = peak = start
     max_dd = 0.0
@@ -135,7 +164,7 @@ def simulate(
         candidates = [(o, pr, w) for o, pr, w in raw if o and o > 1.0]
 
         for odd, prob, won in candidates:
-            if prob - 1.0 / odd <= edge_threshold:
+            if ev_fraction(prob, odd) <= ev_threshold:   # rule 7: EV = P*odds - 1 > tau
                 continue
             kf = calculate_kelly(prob, odd)
             if kf <= 0:

@@ -6,10 +6,13 @@ Ottimizzato per performance sub-millisecond, query indicizzate e concorrenza.
 """
 
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 import aiosqlite
+
+from database import cache_sql
+from utils import cache_ttl
 
 
 class DatabaseManager:
@@ -212,6 +215,47 @@ class DatabaseManager:
                 }
         except Exception:
             return {}
+
+
+    # ── cache API (tabella api_cache) ────────────────────────────────────────
+
+    async def cache_get(self, key: str, now: Optional[datetime] = None) -> Optional[str]:
+        """Valore grezzo se presente e non scaduto; una entry scaduta viene eliminata."""
+        now = now or datetime.now(timezone.utc)
+        async with self.connect() as db:
+            async with db.execute(cache_sql.SQL_GET, (key,)) as cur:
+                row = await cur.fetchone()
+            if row is None:
+                return None
+            if cache_sql.is_expired(row["expires_at"], now):
+                await db.execute(cache_sql.SQL_DELETE, (key,))
+                await db.commit()
+                return None
+            return row["value"]
+
+    async def cache_set(self, key: str, value: str, ttl_type: Optional[str] = None,
+                        ttl_seconds: Optional[int] = None, now: Optional[datetime] = None) -> None:
+        """Salva un valore; TTL da ttl_seconds oppure dalla mappa dei ttl_type (-1 = permanente)."""
+        now = now or datetime.now(timezone.utc)
+        ttl = ttl_seconds if ttl_seconds is not None else cache_ttl.ttl_seconds(ttl_type)
+        async with self.connect() as db:
+            await db.execute(cache_sql.SQL_SET, (key, value, ttl_type,
+                                                 cache_sql.compute_expiry(ttl, now), cache_sql.fmt_ts(now)))
+            await db.commit()
+
+    async def cache_delete(self, key: str) -> bool:
+        async with self.connect() as db:
+            cur = await db.execute(cache_sql.SQL_DELETE, (key,))
+            await db.commit()
+            return cur.rowcount > 0
+
+    async def cache_cleanup_expired(self, now: Optional[datetime] = None) -> int:
+        """Elimina le entry scadute; ritorna quante."""
+        now = now or datetime.now(timezone.utc)
+        async with self.connect() as db:
+            cur = await db.execute(cache_sql.SQL_CLEANUP, (cache_sql.fmt_ts(now),))
+            await db.commit()
+            return cur.rowcount
 
 
 _db_manager: Optional[DatabaseManager] = None

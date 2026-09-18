@@ -24,9 +24,9 @@ from .player_cards_analyzer import PlayerCardsAnalyzer
 
 ANALYZER_REGISTRY: Dict[str, Optional[Type[BaseAnalyzer]]] = {
     "goals":   GoalsAnalyzer,
-    "shots":   ShotsAnalyzer,
-    "corners": CornersAnalyzer,
-    "cards":   CardsAnalyzer,
+    "shots":   None,  # disabled: no historical odds to validate the market
+    "corners": None,  # disabled: no historical odds to validate the market
+    "cards":   None,  # disabled: no historical odds to validate the market
     "result":  ResultAnalyzer,
 }
 

@@ -97,7 +97,7 @@ footy-predictor/
 ├── main.py               # entry point → cli/simple_main.py (router argv)
 ├── cli/                  # router comandi, menu interattivo, display
 ├── adapters/             # client API-Football (http, football_api, odds_api,
-│                         #   roster/stats/live services)
+│                         #   roster/stats services)
 ├── analyzers/            # analyzer di mercato + orchestrator plugin registry
 ├── betting/              # BettingOrchestrator (coordina gli analyzer)
 ├── core/                 # config, models, edge_calculator, odds_fetcher,

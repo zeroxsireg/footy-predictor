@@ -97,21 +97,58 @@ giudice è il **CLV (Closing Line Value)**, che richiede le quote storiche.
 
 ---
 
-## Limiti dati (piano API-Football Free)
+## Dati disponibili (stato verificato al 2026-09-18)
 
-- Stagioni accessibili: **2022–2024** (2025/26 bloccata).
-- **Quote storiche non disponibili** (`/odds` torna vuoto) → impossibile misurare
-  il CLV. Serve un tier a pagamento.
-- Niente **xG** sul piano Free.
+- **Fixture** in cache per le stagioni 2022–2026 (Serie A, Liga, Premier, Bundesliga;
+  la 2026/27 è in corso).
+- **xG per partita** in cache per 2022–2025 (Serie A) e 2023–2025 (Liga, Premier,
+  Bundesliga): quasi completi (0–1 partite senza xG per lega-stagione).
+- **Quote storiche** da football-data.co.uk (CSV, non da API-Football): Serie A e
+  Premier 2024 e 2025, Liga solo 2025. Bundesliga non ha quote. Nessuna quota
+  storica per cartellini, corner, tiri, multigol, BTTS e cartellini giocatore.
+- **Attenzione alla fonte "sharp"**: nel 2025/26 le colonne Pinnacle di chiusura
+  (`PSC*`) sono popolate solo per circa il 50% delle partite (Serie A: 198/380); per le
+  altre la catena di fallback usa Bet365 chiusura. Non è "Pinnacle su tutte le partite".
 
 ---
 
-## Prossima fase (con tier a pagamento)
+## Risultati misurati (audit del 2026-09-18, dati in cache, nessuna chiamata API)
 
-La ricerca è chiara: il collo di bottiglia è l'**input**, non l'architettura.
+Modello xG-Poisson con shrinkage (`iter_xg_predictions`, k=5, xi=0) contro le quote di
+chiusura Bet365 de-viggate, 1760 partite (Serie A e Premier 2024, Serie A/Liga/Premier
+2025; le partite Liga con abbinamento nomi incoerente sono state escluse):
 
-1. **xG al posto dei gol**: alimentare i λ del Poisson con la media smussata
-   degli Expected Goals prodotti/subiti. È il salto di qualità più impattante.
-2. **Quote storiche → tracking CLV**: l'unico test di profittabilità reale.
-3. Ricordare che l'edge retail è *operativo* (bookmaker soft, mercati Asian a
-   basso margine, Kelly frazionale), non solo modellistico.
+| Metrica | Modello | Mercato |
+|---|---|---|
+| RPS 1X2 | 0.2000 | 0.1956 |
+| Accuratezza 1X2 | 52.3% | 53.0% |
+| Brier Over/Under 2.5 | 0.2465 | 0.2450 |
+
+- Il modello è **peggiore del mercato** sull'1X2 (differenza RPS +0.0044, IC95%
+  da +0.0020 a +0.0067). Miscelare modello e mercato non migliora mai il solo mercato
+  (peso ottimale del modello = 0).
+- ROI 1X2 alle quote di chiusura Bet365: circa −12% (t = −3.0); con le migliori quote
+  di chiusura tra bookmaker: circa −6%.
+- ROI Over/Under 2.5: tra +1.6% e +7.6% a seconda di soglia e fonte, sempre con errore
+  standard di 3–5 punti: **non distinguibile da zero**.
+- Il modello **live** (analyzer `baseline`) è molto peggiore: RPS 1X2 0.2262 contro
+  0.1894 del mercato, Brier Over/Under 2.5 0.2777 contro 0.2497 (Serie A 2024 e 2025).
+- Cartellini giocatore (Serie A 2024, storia 2023): tasso base 12.1%, Brier skill −0.002,
+  Precision@k 22.3%: discriminazione debole, nessuna calibrazione migliore della base.
+- Simulazione bankroll 2025/26 con Quarter Kelly, cap 5%, soglia 5%: da 300 a circa
+  135–147 con drawdown massimo 70–80% (il risultato Liga era influenzato da un bug di
+  abbinamento nomi, in correzione).
+
+Conclusione: nessun edge dimostrato. Servono molte più scommesse (ordine di 20.000)
+per misurare un ROI del 2%; il modo efficiente è il CLV su quote di apertura e chiusura
+registrate in avanti (forward test).
+
+---
+
+## Prossima fase
+
+1. **Registro forward** delle previsioni con quote di apertura e di chiusura.
+2. **Informazione che il mercato non ha già prezzato** (formazioni, infortuni): con soli
+   gol e xG storici il peso ottimale nel blend è 0.
+3. L'edge retail, se esiste, è *operativo* (bookmaker soft, line shopping, Kelly
+   frazionale), non solo modellistico.

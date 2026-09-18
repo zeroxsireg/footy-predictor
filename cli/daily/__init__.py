@@ -1,0 +1,1 @@
+"""Daily analysis package."""

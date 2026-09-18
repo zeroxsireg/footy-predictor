@@ -6,7 +6,7 @@ Replays a completed season and measures how well the model predicts
 (Brier score, hit-rate, calibration) — no betting odds involved.
 
 Usage:
-    python run_backtest.py                    # Serie A 2025/26, from cache
+    python run_backtest.py                    # Serie A 2026/27, from cache
     python run_backtest.py --refresh          # force a fresh API download
     python run_backtest.py --league 39 --season 2024 --min-matches 5
 
@@ -28,7 +28,7 @@ from backtest.models import MODELS
 def parse_args():
     p = argparse.ArgumentParser(description="Footy Predictor — Level 1 backtest")
     p.add_argument("--league", type=int, default=135, help="API league id (135 = Serie A)")
-    p.add_argument("--season", type=int, default=2025, help="Season start year (2025 = 2025/26)")
+    p.add_argument("--season", type=int, default=2026, help="Season start year (2026 = 2026/27)")
     p.add_argument("--min-matches", type=int, default=4,
                    help="Skip predictions until both teams have played this many games")
     p.add_argument("--refresh", action="store_true", help="Re-download from the API even if cached")

@@ -219,7 +219,7 @@ class FootballAPIClient:
                 {"id": t.id, "name": t.name, "logo": t.logo} for t in teams
             ]
 
-            if league_name in ("Champions League", "Europa League") and season == 2025:
+            if league_name in ("Champions League", "Europa League") and season == self.settings.default_season:
                 teams = self._filter_european_competition_teams(teams, league_name)
                 print(f"🏆 Filtered {league_name} teams to main tournament: {len(teams)} teams")
                 names = {t.name for t in teams}

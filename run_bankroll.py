@@ -7,7 +7,7 @@ selections (1X2 + Over/Under 2.5) through a completed season at best-available
 odds, reporting the final bankroll.
 
 Usage:
-    python run_bankroll.py                       # $100 each on Serie A/Liga/Premier 2025/26
+    python run_bankroll.py                       # $100 each on Serie A/Liga/Premier 2026/27
     python run_bankroll.py --season 2024 --edge 0.03
 """
 
@@ -29,8 +29,8 @@ LEAGUES = [(135, "Serie A"), (140, "La Liga"), (39, "Premier")]
 
 def parse_args():
     p = argparse.ArgumentParser(description="Bankroll simulation")
-    p.add_argument("--season", type=int, default=2025)
-    p.add_argument("--history", type=str, default="2023,2024")
+    p.add_argument("--season", type=int, default=2026)
+    p.add_argument("--history", type=str, default="2024,2025")
     p.add_argument("--start", type=float, default=100.0)
     p.add_argument("--edge", type=float, default=0.05)
     p.add_argument("--kelly", type=float, default=0.25)

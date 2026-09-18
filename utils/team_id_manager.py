@@ -6,6 +6,8 @@ import json
 from typing import Dict, List, Optional, Tuple
 from datetime import datetime
 
+from core.config import get_settings
+
 class TeamIDManager:
     """Manages team IDs for different leagues and seasons."""
     
@@ -48,21 +50,21 @@ class TeamIDManager:
             print(f"❌ Error fetching teams for league {league_id}: {e}")
             return {}
     
-    async def get_serie_a_teams(self, season: int = 2025) -> Dict[int, str]:
+    async def get_serie_a_teams(self, season: Optional[int] = None) -> Dict[int, str]:
         """Get Serie A teams for specified season."""
-        return await self.get_league_teams(135, season)
+        return await self.get_league_teams(135, season or get_settings().default_season)
     
-    async def get_premier_league_teams(self, season: int = 2025) -> Dict[int, str]:
+    async def get_premier_league_teams(self, season: Optional[int] = None) -> Dict[int, str]:
         """Get Premier League teams for specified season."""
-        return await self.get_league_teams(39, season)
+        return await self.get_league_teams(39, season or get_settings().default_season)
     
-    async def get_la_liga_teams(self, season: int = 2025) -> Dict[int, str]:
+    async def get_la_liga_teams(self, season: Optional[int] = None) -> Dict[int, str]:
         """Get La Liga teams for specified season."""
-        return await self.get_league_teams(140, season)
+        return await self.get_league_teams(140, season or get_settings().default_season)
     
-    async def get_bundesliga_teams(self, season: int = 2025) -> Dict[int, str]:
+    async def get_bundesliga_teams(self, season: Optional[int] = None) -> Dict[int, str]:
         """Get Bundesliga teams for specified season."""
-        return await self.get_league_teams(78, season)
+        return await self.get_league_teams(78, season or get_settings().default_season)
     
     async def find_team_by_name(self, team_name: str, league_id: int, season: int) -> Optional[int]:
         """Find team ID by name in a specific league."""

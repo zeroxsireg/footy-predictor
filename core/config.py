@@ -12,7 +12,7 @@ class Settings(BaseSettings):
     api_football_base: str = "https://v3.football.api-sports.io"
     default_country: str = "Italy"
     default_league: str = "Serie A"
-    default_season: int = 2025
+    default_season: int = 2026
     
     # Redis Configuration
     redis_host: str

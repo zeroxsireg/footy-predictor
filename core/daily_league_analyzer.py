@@ -45,12 +45,14 @@ class DailyLeagueAnalyzer:
         print(f"\n⚽ ANALISI GIORNATA COMPLETA - {league_name}")
         print("=" * 60)
         
+        season = season or get_settings().default_season
+        
         # Get league fixtures
-        league_id = await self.api_client.get_league_id(country, league_name, season or 2025)
+        league_id = await self.api_client.get_league_id(country, league_name, season)
         
         if target_date:
             # For specific date analysis (cross-league)
-            fixtures = await self._get_fixtures_for_date(league_id, season or 2025, target_date)
+            fixtures = await self._get_fixtures_for_date(league_id, season, target_date)
             matchday = f"Specific Date ({target_date.strftime('%d/%m/%Y')})"
         elif specific_fixtures:
             # Legacy support for specific fixtures
@@ -58,7 +60,7 @@ class DailyLeagueAnalyzer:
             matchday = "Specific Date"
         else:
             # Normal analysis (next matchday)
-            fixtures, matchday = await self.api_client.get_next_round_fixtures(league_id, season or 2025, country)
+            fixtures, matchday = await self.api_client.get_next_round_fixtures(league_id, season, country)
         
         if not fixtures:
             raise ValueError(f"Nessuna partita trovata per {league_name}")
@@ -84,7 +86,7 @@ class DailyLeagueAnalyzer:
                 
                 # Analyze single match
                 prediction = await self.match_analyzer._analyze_single_match(
-                    fixture, league_id, season or 2025
+                    fixture, league_id, season
                 )
                 
                 if prediction.status == "TO AVOID":

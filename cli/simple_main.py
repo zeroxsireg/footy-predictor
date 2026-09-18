@@ -250,7 +250,7 @@ def _print_help():
     print("Options for matchday:")
     print("  --league, -l    League name (e.g., 'Serie A')")
     print("  --country, -c   Country name (e.g., 'Italy')")
-    print("  --season, -s    Season year (e.g., 2025)")
+    print("  --season, -s    Season year (e.g., 2026)")
 
 
 if __name__ == "__main__":

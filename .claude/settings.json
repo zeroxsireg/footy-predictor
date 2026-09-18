@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pytest -p no:pytest_anchorpy *)",
+      "Bash(pytest *)",
+      "Bash(python -m pytest *)",
+      "Bash(python main.py *)",
+      "Bash(python run_*.py *)",
+      "Bash(python predict_*.py *)",
+      "Bash(python3 main.py *)",
+      "Bash(python3 run_*.py *)",
+      "Bash(python3 predict_*.py *)",
+      "Bash(npm --prefix web run *)",
+      "Bash(npm --prefix web test *)",
+      "Bash(./web/node_modules/.bin/tsc *)",
+      "Bash(npx --prefix web eslint *)",
+      "Bash(git log *)",
+      "Bash(git diff *)",
+      "Bash(git blame *)",
+      "Bash(git status *)",
+      "Bash(git show *)",
+      "Bash(ls -la *)",
+      "Bash(grep *)"
+    ]
+  }
+}

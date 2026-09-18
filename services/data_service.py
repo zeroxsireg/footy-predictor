@@ -8,6 +8,8 @@ from datetime import datetime
 from typing import Dict, List, Optional, Tuple
 import pytz
 
+from core.config import get_settings
+
 class DataService:
     """
     Servizio centrale per gestione dati.
@@ -25,7 +27,7 @@ class DataService:
         self._team_updates = {}  # {team_id: {'roster': timestamp, 'stats': timestamp}}
         
         # Current season
-        self.current_season = 2025
+        self.current_season = get_settings().default_season
     
     # ==========================================
     # TEAM STATUS MANAGEMENT (VELOCE)

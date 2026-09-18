@@ -26,7 +26,7 @@ class UtilityMenuCLI:
         self.redis_cache = get_redis_cache()
         self.data_service = DataService(self.redis_cache)
         self.league_manager = get_league_manager()
-        self.current_season = 2025
+        self.current_season = self.data_service.current_season
         
         # Carica leghe abilitate dinamicamente
         self.enabled_leagues = self.league_manager.get_enabled_leagues()

@@ -8,6 +8,7 @@ from adapters.football_api import FootballAPIClient
 from core.analyzer import MatchAnalyzer
 from betting.orchestrator import BettingOrchestrator
 from cli.match_display import render_betting_analysis as display_betting_analysis
+from core.config import get_settings
 
 
 class LiveMatchAnalyzer:
@@ -134,7 +135,7 @@ class LiveMatchAnalyzer:
         try:
             # Get league ID and season
             league_id = match["league"]["id"]
-            season = 2025
+            season = match["league"].get("season") or get_settings().default_season
             
             # Create fixture object for analysis
             from core.models import Fixture, Team
